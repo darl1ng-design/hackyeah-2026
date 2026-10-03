@@ -55,7 +55,8 @@ jobs:
       - name: Build and push app image
         uses: docker/build-push-action@v5
         with:
-          context: ./backend
+          context: .
+          file: ./backend/Dockerfile
           push: true
           platforms: linux/arm64
           tags: ${{ steps.meta-app.outputs.tags }}
