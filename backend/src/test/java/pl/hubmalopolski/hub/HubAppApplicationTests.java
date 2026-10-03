@@ -1,12 +1,13 @@
-package dev.hackyeah.backend;
+package pl.hubmalopolski.hub;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class BackendApplicationTests {
+class HubAppApplicationTests {
 
-    @Test
-    void contextLoads() {
-    }
+	@Test
+	void contextLoads() {
+	}
+
 }
