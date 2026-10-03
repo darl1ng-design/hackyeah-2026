@@ -8,19 +8,17 @@ Matchmaking spoleczny (modul I, obligatoryjny) + Zasobnik wiedzy (II) + Kreator 
 ## Uruchomienie
 
 ```bash
-# 1. modele (jednorazowo)
-sh ~/models/fetch_models.sh            # GGUF z HF (embedding 0.6B + chat 4B)
-# 2. baza + serwer embeddingow (llama.cpp w Dockerze)
-docker build -t hub-pg:latest -f docker/Dockerfile.pg docker/
-docker compose up -d                   # db (:5432) + embed (:8081, Qwen3-Embedding-0.6B)
-# 3. chat (rerank/klasyfikator) — opcjonalny, poza Dockerem
-sh ~/models/run_chat.sh &              # :8082 (Qwen3-4B-Instruct)
-# 4. aplikacja
-./mvnw spring-boot:run                 # http://localhost:8080
+# 1. modele (jednorazowo, ~3 GB GGUF na dysku)
+MODELS_DIR=${MODELS_DIR:-$HOME/models} sh ~/models/fetch_models.sh
+# 2. wszystko: db (pg18+pgvector+bm25) + embed (0.6B) + chat (4B) + aplikacja
+docker compose up -d --build           # http://localhost:8080
 ```
 
+Katalog modeli to `~/models` (nadpisz przez `MODELS_DIR`). `docker compose down`
+zostawia dane w wolumenie `hub-pgdata`; `down -v` czyści bazę do zera.
+
 Konta demonstracyjne: `admin/admin123` (panel `/admin`), `user/user123`.
-Bez modeli aplikacja starta i dziala — matchmaking fallbackuje do samej kolejnosci BM25.
+Bez chatu aplikacja starta i dziala — matchmaking fallbackuje do kolejnosci RRF (wektor + BM25).
 
 ## Architektura matchmakeingu (modul I)
 

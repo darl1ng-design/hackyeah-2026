@@ -1,17 +1,8 @@
 services:
-  embed:
-    image: ghcr.io/ggml-org/llama.cpp:server
-    # Qwen3-Embedding-0.6B Q8: 1024d, realtime on CPU (4B was too slow for demo).
-    command: >
-      -m /models/Qwen3-Embedding-0.6B-Q8_0.gguf
-      --embedding --host 0.0.0.0 --port 8081 --ctx-size 4096 --parallel 4
-    volumes:
-      - ${HOME}/models:/models:ro
-    ports:
-      - "127.0.0.1:8081:8081"
-    restart: unless-stopped
-
   db:
+    build:
+      context: docker
+      dockerfile: Dockerfile.pg
     image: hub-pg:latest
     environment:
       POSTGRES_DB: hub
@@ -21,6 +12,61 @@ services:
       - "5432:5432"
     volumes:
       - hub-pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hub -d hub"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  embed:
+    image: ghcr.io/ggml-org/llama.cpp:server
+    # Qwen3-Embedding-0.6B Q8: 1024d, realtime on CPU (4B was too slow for demo).
+    command: >
+      -m /models/Qwen3-Embedding-0.6B-Q8_0.gguf
+      --embedding --host 0.0.0.0 --port 8081 --ctx-size 4096 --parallel 4
+    volumes:
+      - ${MODELS_DIR:-${HOME}/models}:/models:ro
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8081/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 60
+    restart: unless-stopped
+
+  chat:
+    image: ghcr.io/ggml-org/llama.cpp:server
+    # Qwen3-4B-Instruct: obszary + rerank/uzasadnienia. Bez niego app fallbackuje.
+    command: >
+      -m /models/Qwen3-4B-Instruct-Q4_K_M.gguf
+      --host 0.0.0.0 --port 8082 --ctx-size 8192
+    volumes:
+      - ${MODELS_DIR:-${HOME}/models}:/models:ro
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8082/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 60
+    restart: unless-stopped
+
+  app:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+      embed:
+        condition: service_healthy
+      chat:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_NAME: hub
+      DB_USER: hub
+      DB_PASS: ${DB_PASS:-hub}
+      LLM_EMBED_BASE_URL: http://embed:8081/v1
+      LLM_CHAT_BASE_URL: http://chat:8082/v1
+    ports:
+      - "8080:8080"
 
 volumes:
   hub-pgdata:
