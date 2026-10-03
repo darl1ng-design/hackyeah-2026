@@ -9,7 +9,7 @@ services:
       POSTGRES_USER: hub
       POSTGRES_PASSWORD: ${DB_PASS:-hub}
     ports:
-      - "5439:5432"
+      - "5432:5432"
     volumes:
       - hub-pgdata:/var/lib/postgresql
     healthcheck:
@@ -50,7 +50,7 @@ services:
     restart: unless-stopped
 
   app:
-    build: ./backend
+    build: .
     depends_on:
       db:
         condition: service_healthy
@@ -66,7 +66,7 @@ services:
       LLM_EMBED_BASE_URL: http://embed:8081/v1
       LLM_CHAT_BASE_URL: http://chat:8082/v1
     ports:
-      - "8083:8080"
+      - "8080:8080"
 
 volumes:
   hub-pgdata:
