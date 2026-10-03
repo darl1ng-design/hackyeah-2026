@@ -1,21 +1,20 @@
 # Hub Innowacji Spolecznych — MVP (HackYeah / ROPS Krakow)
 
 Spring Boot 4.1 + Spring AI 2.0 + Thymeleaf + Postgres 18 (pgvector + Timescale pg_textsearch BM25)
-+ llama.cpp (Qwen3-Embedding-4B, Qwen3-4B-Instruct) — **100% lokalne, zero API, zero kosztów zapytan**.
++ llama.cpp (Qwen3-Embedding-0.6B, Qwen3-4B-Instruct) — **100% lokalne, zero API, zero kosztów zapytan**.
 
 Matchmaking spoleczny (modul I, obligatoryjny) + Zasobnik wiedzy (II) + Kreator pomyslów (III) + Panel admina (VI).
 
 ## Uruchomienie
 
 ```bash
-# 1. modele (jednorazowo, ~5 GB)
-sh ~/models/fetch_models.sh            # lub pobierz GGUF z HF
-# 2. baza: Postgres 18 + pgvector + pg_textsearch (BM25)
+# 1. modele (jednorazowo)
+sh ~/models/fetch_models.sh            # GGUF z HF (embedding 0.6B + chat 4B)
+# 2. baza + serwer embeddingow (llama.cpp w Dockerze)
 docker build -t hub-pg:latest -f docker/Dockerfile.pg docker/
-docker compose up -d
-# 3. lokalne modele jako OpenAI-compatible API
-sh ~/models/run_embed.sh &             # :8081 embeddings (Qwen3-Embedding-4B, 2560d)
-sh ~/models/run_chat.sh  &             # :8082 chat (Qwen3-4B-Instruct)
+docker compose up -d                   # db (:5432) + embed (:8081, Qwen3-Embedding-0.6B)
+# 3. chat (rerank/klasyfikator) — opcjonalny, poza Dockerem
+sh ~/models/run_chat.sh &              # :8082 (Qwen3-4B-Instruct)
 # 4. aplikacja
 ./mvnw spring-boot:run                 # http://localhost:8080
 ```
@@ -33,9 +32,9 @@ Bez modeli aplikacja starta i dziala — matchmaking fallbackuje do samej kolejn
    z uzasadnieniem „dlaczego pasuje\" + score RRF znormalizowany do 0-100%.
 4. Fallback: kolejnosc RRF/BM25 — demo nie pada bez modeli.
 
-Uwaga: Qwen3-Embedding-4B ma 2560 wymiarow > limit HNSW pgvector (2000) — indeks `NONE`
-(dokladne przeszukiwanie; przy bibliotece ~tys. pozycji to ~ms). Przy skali: Qwen3-Embedding-0.6B
-(1024d) + HNSW.
+Uwaga: Qwen3-Embedding-0.6B ma 1024 wymiary — miesci sie w limicie HNSW pgvector (2000),
+wiec indeks `NONE` (dokladne przeszukiwanie; przy bibliotece ~tys. pozycji to ~ms) mozna
+w razie potrzeby zamienic na HNSW.
 
 ## Dane
 

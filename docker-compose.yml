@@ -1,4 +1,16 @@
 services:
+  embed:
+    image: ghcr.io/ggml-org/llama.cpp:server
+    # Qwen3-Embedding-0.6B Q8: 1024d, realtime on CPU (4B was too slow for demo).
+    command: >
+      -m /models/Qwen3-Embedding-0.6B-Q8_0.gguf
+      --embedding --host 0.0.0.0 --port 8081 --ctx-size 4096 --parallel 4
+    volumes:
+      - ${HOME}/models:/models:ro
+    ports:
+      - "127.0.0.1:8081:8081"
+    restart: unless-stopped
+
   db:
     image: hub-pg:latest
     environment:
