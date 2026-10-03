@@ -139,7 +139,7 @@ public class MatchmakingService {
                             Wybierz max 5 pasujacych. Zwracaj JSON: matches z polami
                             innovationId (liczba) i why (POJEDYNCZE zdanie po polsku, max 12 slow).
                             """).param("problem", problemText).param("candidates", sb.toString()))
-                    .options(OpenAiChatOptions.builder().maxTokens(180).temperature(0.0))
+                    .options(OpenAiChatOptions.builder().maxTokens(400).temperature(0.0))
                     .call()
                     .entity(MatchExplanations.class);
             if (out != null && out.matches() != null && !out.matches().isEmpty()) {

@@ -17,7 +17,7 @@ spring:
       chat:
         base-url: ${LLM_CHAT_BASE_URL:http://localhost:8082/v1}
         options:
-          model: qwen3-4b
+          model: ${LLM_CHAT_MODEL:qwen3-4b}
           temperature: 0.3
       embedding:
         base-url: ${LLM_EMBED_BASE_URL:http://localhost:8081/v1}

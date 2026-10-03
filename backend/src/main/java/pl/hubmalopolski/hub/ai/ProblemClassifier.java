@@ -32,7 +32,7 @@ public class ProblemClassifier {
                     .system("Wybierz JEDEN najbardziej pasujacy obszar. Odpowiedz WYLACZNIE "
                             + "liczba (id obszaru), bez zadnych innych slow.")
                     .user(sb + "\nZgloszony problem: " + problemText)
-                    .options(OpenAiChatOptions.builder().maxTokens(8).temperature(0.0))
+                    .options(OpenAiChatOptions.builder().maxTokens(64).temperature(0.0))
                     .call().content();
             if (answer != null) {
                 Matcher m = ID.matcher(answer);
