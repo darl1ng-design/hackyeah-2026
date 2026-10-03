@@ -3,10 +3,11 @@ package pl.hubmalopolski.hub.match;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.openai.OpenAiChatOptions;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import pl.hubmalopolski.hub.domain.Innovation;
 import pl.hubmalopolski.hub.repo.InnovationRepository;
@@ -96,10 +97,11 @@ public class MatchmakingService {
         rank = 0;
         for (Long id : bm25Ranked) scores.merge(id, 1.0 / (60 + ++rank), Double::sum);
 
-        // tylko top-8 fuzji trafia do reranku LLM — liczy sie kazda sekunda dema
+        // tylko top-5 fuzji trafia do reranku LLM — kazdy kandydat to ~50 tokenow
+        // promptu i ~30 dekodowania; na CPU (4 vCPU, ~12 tok/s) liczy sie kazda linijka.
         List<Long> fusedIds = scores.entrySet().stream()
                 .sorted(Map.Entry.<Long, Double>comparingByValue().reversed())
-                .limit(8).map(Map.Entry::getKey).toList();
+                .limit(5).map(Map.Entry::getKey).toList();
 
         List<Innovation> candidates = fusedIds.stream()
                 .map(innovations::findById)
@@ -122,21 +124,22 @@ public class MatchmakingService {
         try {
             StringBuilder sb = new StringBuilder();
             for (Innovation in : candidates) {
+                String summary = nullSafe(in.getSummary());
+                if (summary.length() > 80) summary = summary.substring(0, 80);
                 sb.append("- id=").append(in.getId()).append(" | ").append(in.getTitle())
-                        .append(" | ").append(nullSafe(in.getSummary()))
-                        .append(" | grupa: ").append(nullSafe(in.getTargetGroup())).append("\n");
+                        .append(" | ").append(summary).append("\n");
             }
             MatchExplanations out = chatClient.prompt()
                     .user(u -> u.text("""
-                            Problem zgloszony przez mieszkanca:
-                            {problem}
-                            
-                            Kandydujace innowacje spoleczne:
+                            Problem: {problem}
+
+                            Innowacje:
                             {candidates}
-                            
-                            Wybierz maksymalnie 5 najlepiej dopasowanych innowacji. Dla kazanej podaj
-                            innovationId oraz why — wylacznie jedno zdanie po polsku, najwyzej 20 slow.
+
+                            Wybierz max 5 pasujacych. Zwracaj JSON: matches z polami
+                            innovationId (liczba) i why (POJEDYNCZE zdanie po polsku, max 12 slow).
                             """).param("problem", problemText).param("candidates", sb.toString()))
+                    .options(OpenAiChatOptions.builder().maxTokens(180).temperature(0.0))
                     .call()
                     .entity(MatchExplanations.class);
             if (out != null && out.matches() != null && !out.matches().isEmpty()) {

@@ -22,6 +22,7 @@ import pl.hubmalopolski.hub.repo.ResourceRepository;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * REST API v1 dla frontendu (Swagger: /swagger-ui.html, spec: /v3/api-docs).
@@ -107,12 +108,16 @@ public class ApiController {
 
         @PostMapping("/matches")
         public MatchResponse match(@RequestBody @jakarta.validation.Valid MatchRequest req) {
+            // klasyfikacja obszaru i matchmaking dekoduja tokeny na CPU — dwa
+            // zapytania do llama.cpp jednoczesnie (--parallel 2) zamiast lacznie
             ProblemReport report = new ProblemReport(req.description(), req.region(), req.authorName());
-            report.setArea(classifier.classify(req.description(), areas.findAll()));
-            reports.save(report);
+            CompletableFuture<ChallengeArea> area =
+                    CompletableFuture.supplyAsync(() -> classifier.classify(req.description(), areas.findAll()));
             List<MatchItemDto> items = matchmaking.match(req.description()).stream()
                     .map(m -> new MatchItemDto(toDto(m.innovation()), m.why(), m.score()))
                     .toList();
+            report.setArea(area.join());
+            reports.save(report);
             return new MatchResponse(report.getId(), report.getStatus(), toDto(report.getArea()), items);
         }
 

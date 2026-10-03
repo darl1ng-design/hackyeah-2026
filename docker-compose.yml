@@ -58,7 +58,7 @@ services:
     # Qwen3-4B-Instruct: obszary + rerank/uzasadnienia. Bez niego app fallbackuje.
     command: >
       -m /models/Qwen3-4B-Instruct-Q4_K_M.gguf
-      --host 0.0.0.0 --port 8082 --ctx-size 8192
+      --host 0.0.0.0 --port 8082 --ctx-size 4096 --parallel 2
     volumes:
       - ${MODELS_DIR:-./models}:/models:ro
     healthcheck:
