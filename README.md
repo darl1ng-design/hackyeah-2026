@@ -20,6 +20,29 @@ zostawia dane w wolumenie `hub-pgdata`; `down -v` czyści bazę do zera.
 Konta demonstracyjne: `admin/admin123` (panel `/admin`), `user/user123`.
 Bez chatu aplikacja starta i dziala — matchmaking fallbackuje do kolejnosci RRF (wektor + BM25).
 
+## API dla frontendu
+
+REST pod `/api/v1/**` (server-renderowany Thymeleaf zostaje — API to równoległa warstwa):
+
+| Metoda | Sciezka | Opis |
+|---|---|---|
+| GET | `/api/v1/innovations?areaId=&q=` | biblioteka innowacji (filtr obszaru / slowo kluczowe) |
+| GET | `/api/v1/innovations/{id}` | jedna innowacja (404 jesli brak) |
+| GET | `/api/v1/areas` | obszary Mapy Wyzwan |
+| GET | `/api/v1/resources` | zasoby ROPS |
+| POST | `/api/v1/matches` | `{description, region?, authorName?}` -> `{reportId, reportStatus, area, matches[]}` (matchmaking hybrydowy) |
+| GET | `/api/v1/ideas` | fiszki pomyslow (nowe na górze) |
+| POST | `/api/v1/ideas` | `{title*, essence?, targetGroup?, stage?, description?}` -> 201 + fiszka |
+| POST | `/api/v1/ideas/assistant` | `{message}` -> `{reply}` (asystent AI; fallback gdy chat wylaczony) |
+
+Dokumentacja: **Swagger UI** `http://localhost:8080/swagger-ui.html`,
+maszynowo `http://localhost:8080/v3/api-docs` (JSON, generowany w runtime — zawsze aktualny).
+`openapi.json` w glównym katalogu repo to wyeksportowany snapshot tego specu.
+
+Auth demo: `POST /login` (form: `username`, `password`, `_csrf`) -> ciastko `JSESSIONID`;
+w `fetch` uzywaj `credentials: 'include'`. Endpointy `/api/v1/**` sa w demo otwarte
+(bez logowania i CSRF) — do zamkniecia przed wdrozeniem.
+
 ## Architektura matchmakeingu (modul I)
 
 1. Zgloszenie (`POST /match`) trafia do `problem_report`; LLM przypisuje obszar z Mapy Wyzwan (structured output).
