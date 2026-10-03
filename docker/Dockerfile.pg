@@ -1,0 +1,18 @@
+FROM pgvector/pgvector:0.8.2-pg18-trixie
+
+ARG PG_TEXTSEARCH_VERSION=v1.3.1
+
+RUN apt-get update && apt-get install -y --no-install-recommends curl unzip ca-certificates \
+ && curl -sL -o /tmp/pg_textsearch.zip \
+    "https://github.com/timescale/pg_textsearch/releases/download/${PG_TEXTSEARCH_VERSION}/pg-textsearch-v${PG_TEXTSEARCH_VERSION#v}-pg18-amd64.zip" \
+ && unzip -o -q /tmp/pg_textsearch.zip -d /tmp/pg_textsearch \
+ && dpkg -i $(ls /tmp/pg_textsearch/*.deb | grep -v dbgsym) \
+ && rm -rf /tmp/pg_textsearch /tmp/pg_textsearch.zip \
+ && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Polish stopword list for the hub_pl BM25 text search config (V7 migration)
+COPY polish.stop /usr/share/postgresql/18/tsearch_data/polish.stop
+
+# pg_textsearch must be preloaded
+ENTRYPOINT ["docker-entrypoint.sh"]
+CMD ["postgres", "-c", "shared_preload_libraries=pg_textsearch"]

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="pl" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Zglos problem')}"></head>
+<body class="bg-slate-50 text-slate-900">
+<header th:replace="~{fragments/layout :: header}"></header>
+<main id="tresc" class="max-w-2xl mx-auto px-4 py-10">
+  <h1 class="text-3xl font-bold mb-3">Co jest problemem w Twojej okolicy?</h1>
+  <p class="mb-6">Napisz zwyklymi slowami, jak do sasiedza. Nie musisz znac rozwiazania —
+     nasz system znajdzie podobne przypadki i gotowe innowacje.</p>
+  <form th:action="@{/match}" method="post" class="space-y-5">
+    <div>
+      <label for="description" class="block font-bold mb-1">Opis problemu *</label>
+      <textarea id="description" name="description" required rows="5"
+        class="w-full rounded-lg border border-slate-400 p-3 text-lg"
+        placeholder="np. W mojej gminie seniorzy sa samotni, nikt ich nie odwiedza, a sklep jest daleko."></textarea>
+    </div>
+    <div class="grid md:grid-cols-2 gap-4">
+      <div>
+        <label for="region" class="block font-bold mb-1">Gmina / powiat</label>
+        <input id="region" name="region" class="w-full rounded-lg border border-slate-400 p-3" placeholder="np. gmina Liszki">
+      </div>
+      <div>
+        <label for="authorName" class="block font-bold mb-1">Twoje imie (opcjonalnie)</label>
+        <input id="authorName" name="authorName" class="w-full rounded-lg border border-slate-400 p-3">
+      </div>
+    </div>
+    <button type="submit" class="bg-blue-800 text-white font-bold text-lg px-6 py-3 rounded-lg hover:bg-blue-900">
+      Znajdz dopasowane rozwiazania
+    </button>
+  </form>
+</main>
+</body>
+</html>

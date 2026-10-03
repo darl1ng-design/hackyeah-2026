@@ -1,0 +1,312 @@
+openapi: 3.1.0
+info:
+  title: Hub Innowacji Spolecznych API
+  description: |-
+    REST API (sciezki /api/v1/**) dla frontendu.
+    Auth: login formularzowy Spring Security (POST /login z username/password/_csrf)
+    ustawia ciastko JSESSIONID — endpointy /api/v1 wysylaja je automatycznie
+    (w fetch: credentials: 'include').
+    UWAGA demo: /api/v1/** nie wymaga logowania i nie wymaga CSRF —
+    do wdrozenia zostac to zmienione (SecurityConfig).
+  version: v1
+servers:
+- url: http://localhost:8080
+  description: Generated server url
+paths:
+  /pomysly/asystent:
+    post:
+      tags:
+      - idea-controller
+      operationId: coach
+      parameters:
+      - name: message
+        in: query
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: object
+                additionalProperties:
+                  type: string
+  /api/v1/matches:
+    post:
+      tags:
+      - api-controller
+      operationId: match
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MatchRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/MatchResponse"
+  /api/v1/ideas:
+    get:
+      tags:
+      - api-controller
+      operationId: listIdeas
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/IdeaDto"
+    post:
+      tags:
+      - api-controller
+      operationId: createIdea
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IdeaRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/IdeaDto"
+  /api/v1/ideas/assistant:
+    post:
+      tags:
+      - api-controller
+      operationId: assistant
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssistantRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/AssistantReply"
+  /api/v1/resources:
+    get:
+      tags:
+      - api-controller
+      operationId: listResources
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ResourceDto"
+  /api/v1/innovations:
+    get:
+      tags:
+      - api-controller
+      operationId: listInnovations
+      parameters:
+      - name: areaId
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: q
+        in: query
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/InnovationDto"
+  /api/v1/innovations/{id}:
+    get:
+      tags:
+      - api-controller
+      operationId: getInnovation
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/InnovationDto"
+  /api/v1/areas:
+    get:
+      tags:
+      - api-controller
+      operationId: listAreas
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AreaDto"
+components:
+  schemas:
+    MatchRequest:
+      type: object
+      properties:
+        description:
+          type: string
+          minLength: 1
+        region:
+          type: string
+        authorName:
+          type: string
+      required:
+      - description
+    AreaDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        description:
+          type: string
+    InnovationDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        title:
+          type: string
+        summary:
+          type: string
+        description:
+          type: string
+        targetGroup:
+          type: string
+        status:
+          type: string
+        region:
+          type: string
+        videoUrl:
+          type: string
+        sourceUrl:
+          type: string
+        area:
+          $ref: "#/components/schemas/AreaDto"
+    MatchItemDto:
+      type: object
+      properties:
+        innovation:
+          $ref: "#/components/schemas/InnovationDto"
+        why:
+          type: string
+        similarity:
+          type: number
+          format: double
+    MatchResponse:
+      type: object
+      properties:
+        reportId:
+          type: integer
+          format: int64
+        reportStatus:
+          type: string
+        area:
+          $ref: "#/components/schemas/AreaDto"
+        matches:
+          type: array
+          items:
+            $ref: "#/components/schemas/MatchItemDto"
+    IdeaRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+        essence:
+          type: string
+        targetGroup:
+          type: string
+        stage:
+          type: string
+        description:
+          type: string
+      required:
+      - title
+    IdeaDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        title:
+          type: string
+        essence:
+          type: string
+        targetGroup:
+          type: string
+        stage:
+          type: string
+        description:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+    AssistantRequest:
+      type: object
+      properties:
+        message:
+          type: string
+          minLength: 1
+      required:
+      - message
+    AssistantReply:
+      type: object
+      properties:
+        reply:
+          type: string
+    ResourceDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        url:
+          type: string
+        kind:
+          type: string
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      name: JSESSIONID
+      in: cookie
