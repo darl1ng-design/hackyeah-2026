@@ -77,14 +77,15 @@ public class MatchmakingService {
         }
 
         // 2) BM25 (pg_textsearch) — dokladne dopasowanie slow
-        List<Long> bm25Ranked = new ArrayList<>();
+        Map<Long, Double> byBm25 = new LinkedHashMap<>();
         try {
             for (Object[] row : innovations.searchBm25(problemText, bm25TopK)) {
-                bm25Ranked.add(((Number) row[0]).longValue());
+                byBm25.put(((Number) row[0]).longValue(), ((Number) row[1]).doubleValue());
             }
         } catch (Exception e) {
             log.warn("BM25 niedostepne: {}", e.getMessage());
         }
+        List<Long> bm25Ranked = new ArrayList<>(byBm25.keySet());
 
         // 3) reciprocal-rank fusion wektor + BM25
         Map<Long, Double> scores = new HashMap<>();
@@ -102,11 +103,20 @@ public class MatchmakingService {
                 .map(innovations::findById)
                 .filter(Optional::isPresent).map(Optional::get)
                 .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
-        return finish(problemText, candidates, scores);
+        return finish(problemText, candidates, byVector, byBm25);
     }
 
-    private List<MatchResult> finish(String problemText, List<Innovation> candidates, Map<Long, Double> scores) {
+    private List<MatchResult> finish(String problemText, List<Innovation> candidates,
+                                     Map<Long, Double> byVector, Map<Long, Double> byBm25) {
         if (candidates.isEmpty()) return List.of();
+        // uczciwy wynik: cosine z wektorow albo znormalizowany BM25 (skalowany do 0.9),
+        // NIGDY score/max (to dawalo top wynikowi falszywe 100%).
+        double maxBm25 = byBm25.values().stream().mapToDouble(Double::doubleValue).max().orElse(0.0);
+        java.util.function.Function<Long, Double> displayScore = id -> {
+            double v = byVector.getOrDefault(id, 0.0);
+            if (maxBm25 > 0) v = Math.max(v, byBm25.getOrDefault(id, 0.0) / maxBm25 * 0.9);
+            return v;
+        };
         try {
             StringBuilder sb = new StringBuilder();
             for (Innovation in : candidates) {
@@ -130,12 +140,11 @@ public class MatchmakingService {
             if (out != null && out.matches() != null && !out.matches().isEmpty()) {
                 Map<Long, Innovation> byId = new HashMap<>();
                 candidates.forEach(i -> byId.put(i.getId(), i));
-                double max = scores.values().stream().mapToDouble(Double::doubleValue).max().orElse(1.0);
                 List<MatchResult> results = new ArrayList<>();
                 for (MatchExplanations.MatchExplanation m : out.matches()) {
                     Innovation in = byId.get(m.innovationId());
                     if (in != null) results.add(new MatchResult(in, m.why(),
-                            max > 0 ? scores.getOrDefault(in.getId(), 0.0) / max : 0.0));
+                            displayScore.apply(in.getId())));
                 }
                 if (!results.isEmpty()) return results;
             }
@@ -143,12 +152,16 @@ public class MatchmakingService {
             log.warn("Rerank LLM niedostepny ({}), uzywam kolejnosci wektorowej", e.getMessage());
         }
         // fallback: kolejnosc RRF (wektor + BM25), generyczne uzasadnienie
-        double max = scores.values().stream().mapToDouble(Double::doubleValue).max().orElse(1.0);
+        Map<Long, Double> rrf = new HashMap<>();
+        int r = 0;
+        for (Long id : byVector.keySet()) rrf.merge(id, 1.0 / (60 + ++r), Double::sum);
+        r = 0;
+        for (Long id : byBm25.keySet()) rrf.merge(id, 1.0 / (60 + ++r), Double::sum);
         return candidates.stream()
-                .sorted(Comparator.comparingDouble((Innovation i) -> scores.getOrDefault(i.getId(), 0.0)).reversed())
+                .sorted(Comparator.comparingDouble((Innovation i) -> rrf.getOrDefault(i.getId(), 0.0)).reversed())
                 .limit(5)
                 .map(i -> new MatchResult(i, "Podobny problem lub odbiorca — dopasowanie hybrydowe (wektor + BM25).",
-                        max > 0 ? scores.getOrDefault(i.getId(), 0.0) / max : 0.0))
+                        displayScore.apply(i.getId())))
                 .toList();
     }
 
