@@ -1,4 +1,14 @@
 HELP.md
+
+### Python / local ###
+.env
+.venv/
+__pycache__/
+docs/scratchpad/
+.env.bak.*
+.claude/settings.local.json
+
+### Maven / Java ###
 target/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
@@ -14,7 +24,7 @@ target/
 .sts4-cache
 
 ### IntelliJ IDEA ###
-.idea
+.idea/
 *.iws
 *.iml
 *.ipr
@@ -31,3 +41,8 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Local environment ###
+.env
+.env.*
+!.env.example
