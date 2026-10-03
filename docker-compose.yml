@@ -1,6 +1,6 @@
 services:
   db:
-    image: pgvector/pgvector:pg16
+    image: hub-pg:latest
     environment:
       POSTGRES_DB: hub
       POSTGRES_USER: hub
@@ -8,7 +8,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - hub-pgdata:/var/lib/postgresql/data
+      - hub-pgdata:/var/lib/postgresql
 
 volumes:
   hub-pgdata:

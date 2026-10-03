@@ -15,4 +15,11 @@ public interface InnovationRepository extends JpaRepository<Innovation, Long> {
          + " or lower(coalesce(i.description, '')) like lower(concat('%', :term, '%'))"
          + " or lower(coalesce(i.targetGroup, '')) like lower(concat('%', :term, '%'))")
     List<Innovation> searchKeyword(String term, Pageable pageable);
+
+    /** BM25 (Timescale pg_textsearch): <@> returns negative scores, lower = better. */
+    @Query(value = "select id, -(search_field <@> to_bm25query(cast(:q as text), 'innovation_bm25_idx')) as score"
+         + " from innovation"
+         + " order by search_field <@> to_bm25query(cast(:q as text), 'innovation_bm25_idx')"
+         + " limit :k", nativeQuery = true)
+    List<Object[]> searchBm25(String q, int k);
 }

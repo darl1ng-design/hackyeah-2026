@@ -16,9 +16,10 @@ import pl.hubmalopolski.hub.repo.InnovationRepository;
 import java.util.*;
 
 /**
- * Matchmaking spoleczny (modul I): hybrid wektor + slowa kluczowe, nastepnie
- * rerank LLM z uzasadnieniem "dlaczego to pasuje". Bez klucza API / bledu LLM
- * fallbackuje do kolejnosci wektorowej — demo nigdy nie pada.
+ * Matchmaking spoleczny (modul I): hybrid — pgvector (semantyka) + BM25 pg_textsearch
+ * (dokladne slowa), polaczone reciprocal-rank fusion, nastepnie rerank LLM z
+ * uzasadnieniem "dlaczego to pasuje". Bez modelu LLM fallbackuje do kolejnosci RRF
+ * — demo nigdy nie pada.
  */
 @Service
 public class MatchmakingService {
@@ -32,6 +33,9 @@ public class MatchmakingService {
 
     @Value("${hub.match.top-k:8}")
     private int vectorTopK;
+
+    @Value("${hub.match.bm25-top-k:8}")
+    private int bm25TopK;
 
     public MatchmakingService(VectorStore vectorStore, ChatClient chatClient, InnovationRepository innovations) {
         this.vectorStore = vectorStore;
@@ -72,26 +76,32 @@ public class MatchmakingService {
             log.warn("Wyszukiwanie wektorowe niedostepne: {}", e.getMessage());
         }
 
-        // 2) slowa kluczowe (LIKE) — wypelnienie i fallback
-        List<Innovation> candidates = new ArrayList<>();
-        Map<Long, Double> scores = new HashMap<>(byVector);
-        for (Innovation in : innovations.findAll()) {
-            if (!byVector.containsKey(in.getId())) {
-                String hay = (nullSafe(in.getTitle()) + " " + nullSafe(in.getSummary()) + " "
-                        + nullSafe(in.getDescription()) + " " + nullSafe(in.getTargetGroup())).toLowerCase();
-                for (String w : problemText.toLowerCase().split("\\W+")) {
-                    if (w.length() >= 5 && hay.contains(w)) {
-                        candidates.add(in);
-                        scores.putIfAbsent(in.getId(), 0.3);
-                        break;
-                    }
-                }
+        // 2) BM25 (pg_textsearch) — dokladne dopasowanie slow
+        List<Long> bm25Ranked = new ArrayList<>();
+        try {
+            for (Object[] row : innovations.searchBm25(problemText, bm25TopK)) {
+                bm25Ranked.add(((Number) row[0]).longValue());
             }
+        } catch (Exception e) {
+            log.warn("BM25 niedostepne: {}", e.getMessage());
         }
-        byVector.keySet().stream()
+
+        // 3) reciprocal-rank fusion wektor + BM25
+        Map<Long, Double> scores = new HashMap<>();
+        int rank = 0;
+        for (Long id : byVector.keySet()) scores.merge(id, 1.0 / (60 + ++rank), Double::sum);
+        rank = 0;
+        for (Long id : bm25Ranked) scores.merge(id, 1.0 / (60 + ++rank), Double::sum);
+
+        // tylko top-8 fuzji trafia do reranku LLM — liczy sie kazda sekunda dema
+        List<Long> fusedIds = scores.entrySet().stream()
+                .sorted(Map.Entry.<Long, Double>comparingByValue().reversed())
+                .limit(8).map(Map.Entry::getKey).toList();
+
+        List<Innovation> candidates = fusedIds.stream()
                 .map(innovations::findById)
                 .filter(Optional::isPresent).map(Optional::get)
-                .forEach(candidates::add);
+                .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
         return finish(problemText, candidates, scores);
     }
 
@@ -112,30 +122,33 @@ public class MatchmakingService {
                         Kandydujace innowacje spoleczne:
                         {candidates}
 
-                        Wybierz maksymalnie 5 najlepiej dopasowanych innowacji i dla kazanej
-                        napisz jedno zdanie po polsku: dlaczego pasuje do tego problemu.
+                        Wybierz maksymalnie 5 najlepiej dopasowanych innowacji. Dla kazanej podaj
+                        innovationId oraz why — wylacznie jedno zdanie po polsku, najwyzej 20 slow.
                         """).param("problem", problemText).param("candidates", sb.toString()))
                     .call()
                     .entity(MatchExplanations.class);
             if (out != null && out.matches() != null && !out.matches().isEmpty()) {
                 Map<Long, Innovation> byId = new HashMap<>();
                 candidates.forEach(i -> byId.put(i.getId(), i));
+                double max = scores.values().stream().mapToDouble(Double::doubleValue).max().orElse(1.0);
                 List<MatchResult> results = new ArrayList<>();
                 for (MatchExplanations.MatchExplanation m : out.matches()) {
                     Innovation in = byId.get(m.innovationId());
-                    if (in != null) results.add(new MatchResult(in, m.why(), scores.getOrDefault(in.getId(), 0.0)));
+                    if (in != null) results.add(new MatchResult(in, m.why(),
+                            max > 0 ? scores.getOrDefault(in.getId(), 0.0) / max : 0.0));
                 }
                 if (!results.isEmpty()) return results;
             }
         } catch (Exception e) {
             log.warn("Rerank LLM niedostepny ({}), uzywam kolejnosci wektorowej", e.getMessage());
         }
-        // fallback: kolejnosc wektorowa, generyczne uzasadnienie
+        // fallback: kolejnosc RRF (wektor + BM25), generyczne uzasadnienie
+        double max = scores.values().stream().mapToDouble(Double::doubleValue).max().orElse(1.0);
         return candidates.stream()
                 .sorted(Comparator.comparingDouble((Innovation i) -> scores.getOrDefault(i.getId(), 0.0)).reversed())
                 .limit(5)
-                .map(i -> new MatchResult(i, "Podobny problem w opisie innowacji — dopasowanie kluczowe.",
-                        scores.getOrDefault(i.getId(), 0.0)))
+                .map(i -> new MatchResult(i, "Podobny problem lub odbiorca — dopasowanie hybrydowe (wektor + BM25).",
+                        max > 0 ? scores.getOrDefault(i.getId(), 0.0) / max : 0.0))
                 .toList();
     }
 

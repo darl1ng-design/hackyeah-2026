@@ -47,9 +47,11 @@ public class AdminController {
                                 @RequestParam(required = false) String targetGroup,
                                 @RequestParam(required = false) String status,
                                 @RequestParam(required = false) String region,
+                                @RequestParam(required = false) String sourceUrl,
                                 @RequestParam(required = false) Long areaId) {
         Innovation in = new Innovation(title, summary, description, targetGroup,
                 status != null ? status : "ROZWOJ", region, null);
+        in.setSourceUrl(sourceUrl);
         if (areaId != null) in.setArea(areas.findById(areaId).orElse(null));
         innovations.save(in);
         try { matchmaking.index(in); innovations.save(in); } catch (Exception ignored) {}

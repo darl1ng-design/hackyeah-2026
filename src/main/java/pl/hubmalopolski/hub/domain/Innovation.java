@@ -18,6 +18,8 @@ public class Innovation {
     private String region;
     @Column(name = "video_url")
     private String videoUrl;
+    @Column(name = "source_url")
+    private String sourceUrl;      // real, clickable link to the innovation (ROPS library / official site)
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "area_id")
     private ChallengeArea area;
@@ -39,6 +41,8 @@ public class Innovation {
     public String getStatus() { return status; }
     public String getRegion() { return region; }
     public String getVideoUrl() { return videoUrl; }
+    public String getSourceUrl() { return sourceUrl; }
+    public void setSourceUrl(String sourceUrl) { this.sourceUrl = sourceUrl; }
     public ChallengeArea getArea() { return area; }
     public void setArea(ChallengeArea area) { this.area = area; }
     public String getVectorId() { return vectorId; }
