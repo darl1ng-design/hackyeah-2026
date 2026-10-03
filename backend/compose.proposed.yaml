@@ -1,0 +1,86 @@
+services:
+  backend:
+    build:
+      context: ./backend
+    ports:
+      - "${BACKEND_PORT:-8082}:8080"
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-hub}
+      DB_USER: ${DB_USER:-hub}
+      DB_PASS: ${DB_PASS:-hub}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-set-me}
+      LLM_CHAT_BASE_URL: ${LLM_CHAT_BASE_URL:-http://llama-chat:8080/v1}
+      LLM_EMBED_BASE_URL: ${LLM_EMBED_BASE_URL:-http://llama-embed:8080}
+    depends_on:
+      db:
+        condition: service_healthy
+      llama-embed:
+        condition: service_healthy
+      llama-chat:
+        condition: service_healthy
+
+  db:
+    build:
+      context: ./docker
+      dockerfile: Dockerfile.pg
+    image: hub-pg:latest
+    platform: linux/amd64
+    environment:
+      POSTGRES_DB: ${DB_NAME:-hub}
+      POSTGRES_USER: ${DB_USER:-hub}
+      POSTGRES_PASSWORD: ${DB_PASS:-hub}
+    ports:
+      - "${POSTGRES_PORT:-5439}:5432"
+    volumes:
+      - hub-pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  llama-embed:
+    image: ghcr.io/ggml-org/llama.cpp:server
+    command:
+      - --hf-repo
+      - Qwen/Qwen3-Embedding-4B-GGUF:Q4_K_M
+      - --alias
+      - qwen3-embedding-4b
+      - --embedding
+      - --pooling
+      - last
+      - --ctx-size
+      - "4096"
+      - --parallel
+      - "1"
+    environment:
+      LLAMA_CACHE: /models-cache
+    ports:
+      - "127.0.0.1:${EMBED_PORT:-8081}:8080"
+    volumes:
+      - llama-embed-cache:/models-cache
+
+  llama-chat:
+    image: ghcr.io/ggml-org/llama.cpp:server
+    command:
+      - --hf-repo
+      - Qwen/Qwen3-4B-GGUF:Q4_K_M
+      - --alias
+      - qwen3-4b
+      - --ctx-size
+      - "4096"
+      - --parallel
+      - "1"
+    environment:
+      LLAMA_CACHE: /models-cache
+    ports:
+      - "127.0.0.1:${CHAT_PORT:-8083}:8080"
+    volumes:
+      - llama-chat-cache:/models-cache
+
+volumes:
+  hub-pgdata:
+  llama-embed-cache:
+  llama-chat-cache:

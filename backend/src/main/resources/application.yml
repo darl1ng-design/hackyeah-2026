@@ -22,12 +22,10 @@ spring:
       embedding:
         base-url: ${LLM_EMBED_BASE_URL:http://localhost:8081/v1}
         options:
-          model: qwen3-embedding-4b
+          model: qwen3-embedding-0.6b
     vectorstore:
       pgvector:
         initialize-schema: true
-        # Qwen3-Embedding-4B = 2560 dims > pgvector HNSW limit (2000). Exact search is
-        # fine for the library size; for scale, use the 0.6B model (1024 dims) + HNSW.
         index-type: NONE
         distance-type: COSINE_DISTANCE
         dimensions: 2560

@@ -3,25 +3,36 @@ services:
     build:
       context: ./backend
     ports:
-      - "${BACKEND_PORT:-8080}:8080"
+      - "${BACKEND_PORT:-8082}:8080"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-hackyeah}
-      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-hackyeah}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-hackyeah}
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-hub}
+      DB_USER: ${DB_USER:-hub}
+      DB_PASS: ${DB_PASS:-hub}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-set-me}
+      LLM_CHAT_BASE_URL: ${LLM_CHAT_BASE_URL:-http://host.docker.internal:8082/v1}
+      LLM_EMBED_BASE_URL: ${LLM_EMBED_BASE_URL:-http://host.docker.internal:8081/v1}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       db:
         condition: service_healthy
 
   db:
-    image: postgres:17-alpine
+    build:
+      context: ./docker
+      dockerfile: Dockerfile.pg
+    image: hub-pg:latest
+    platform: linux/amd64
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-hackyeah}
-      POSTGRES_USER: ${POSTGRES_USER:-hackyeah}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-hackyeah}
+      POSTGRES_DB: ${DB_NAME:-hub}
+      POSTGRES_USER: ${DB_USER:-hub}
+      POSTGRES_PASSWORD: ${DB_PASS:-hub}
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "${POSTGRES_PORT:-5439}:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - hub-pgdata:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
       interval: 5s
@@ -29,4 +40,4 @@ services:
       retries: 10
 
 volumes:
-  postgres_data:
+  hub-pgdata:
