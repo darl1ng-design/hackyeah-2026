@@ -1,36 +1,58 @@
 # Hub Innowacji Spolecznych — MVP (HackYeah / ROPS Krakow)
 
-Spring Boot 4.1 + Spring AI 2.0 + Thymeleaf/HTMX-style pages + Postgres/pgvector.
+Spring Boot 4.1 + Spring AI 2.0 + Thymeleaf + Postgres 18 (pgvector + Timescale pg_textsearch BM25)
++ llama.cpp (Qwen3-Embedding-4B, Qwen3-4B-Instruct) — **100% lokalne, zero API, zero kosztów zapytan**.
+
 Matchmaking spoleczny (modul I, obligatoryjny) + Zasobnik wiedzy (II) + Kreator pomyslów (III) + Panel admina (VI).
 
 ## Uruchomienie
 
 ```bash
-docker compose up -d                                   # Postgres 16 + pgvector
-export OPENAI_API_KEY=***                        # embeddings + rerank LLM
-./mvnw spring-boot:run                                 # http://localhost:8080
+# 1. modele (jednorazowo, ~5 GB)
+sh ~/models/fetch_models.sh            # lub pobierz GGUF z HF
+# 2. baza: Postgres 18 + pgvector + pg_textsearch (BM25)
+docker build -t hub-pg:latest -f docker/Dockerfile.pg docker/
+docker compose up -d
+# 3. lokalne modele jako OpenAI-compatible API
+sh ~/models/run_embed.sh &             # :8081 embeddings (Qwen3-Embedding-4B, 2560d)
+sh ~/models/run_chat.sh  &             # :8082 chat (Qwen3-4B-Instruct)
+# 4. aplikacja
+./mvnw spring-boot:run                 # http://localhost:8080
 ```
 
-Konta demonstracyjne: `admin/admin123` (panel /admin), `user/user123`.
-Bez klucza API aplikacja starta i dziala — matchmaking fallbackuje do dopasowania slowami kluczowymi.
+Konta demonstracyjne: `admin/admin123` (panel `/admin`), `user/user123`.
+Bez modeli aplikacja starta i dziala — matchmaking fallbackuje do samej kolejnosci BM25.
 
 ## Architektura matchmakeingu (modul I)
 
-1. Zgloszenie problemu (`POST /match`) trafia do `problem_report`; LLM przypisuje obszar z Mapy Wyzwan (structured output).
-2. `MatchmakingService`: top-k po wektorach (cosine, HNSW w `vector_store`) + dopelnienie slowami kluczowymi (LIKE) — hybrid.
-3. Rerank LLM zwraca `MatchExplanations` (JSON, walidowany przez Spring AI `.entity()`) z uzasadnieniem „dlaczego pasuje".
-4. Fallback bez LLM: kolejnosc wektorowa + scoring slow kluczowych (demo nie pada bez sieci).
+1. Zgloszenie (`POST /match`) trafia do `problem_report`; LLM przypisuje obszar z Mapy Wyzwan (structured output).
+2. **Hybrydowe wyszukanie**: pgvector cosine (semantyka, Qwen3-Embedding-4B) + **BM25** (`pg_textsearch`,
+   indeks `innovation_bm25_idx`, konfig `simple` — brak wbudowanego stemmera PL) — polaczone
+   **reciprocal-rank fusion** (k=60).
+3. Rerank LLM (Qwen3-4B) zwraca `MatchExplanations` (JSON przez Spring AI `.entity()`)
+   z uzasadnieniem „dlaczego pasuje\" + score RRF znormalizowany do 0-100%.
+4. Fallback: kolejnosc RRF/BM25 — demo nie pada bez modeli.
 
-Innowacje indeksowane sa przy seedzie (`SeedRunner`) i przy dodaniu przez panel admina.
+Uwaga: Qwen3-Embedding-4B ma 2560 wymiarow > limit HNSW pgvector (2000) — indeks `NONE`
+(dokladne przeszukiwanie; przy bibliotece ~tys. pozycji to ~ms). Przy skali: Qwen3-Embedding-0.6B
+(1024d) + HNSW.
+
+## Dane
+
+`V4`/`V5` (Flyway): obszary Mapy Wyzwan + **18 prawdziwych pozycji** z Biblioteki Innowacji
+Spolecznych ROPS Krakow (BaWita, Merkury, koMIX zyciowy, Patryk i Kropka, Edki, Puzzle 3D
+Braille, Kody QR...) z **prawdziwymi linkami**: strony katalogowe rops.krakow.pl, filmy
+YouTube, materialy CC-BY + ogolnopolskie linie (116 111, 800 70 2222, Niebieska Linia).
+Kazda karta ma klikalne „Strona innowacji\" i „Zobacz film\".
 
 ## Moduly
 
 | Sciezka | Modul |
 |---|---|
 | `/match` | I. Matchmaking spoleczny (obligatoryjny) |
-| `/wiedza` | II. Zasobnik wiedzy (wyzwania + biblioteka innowacji) |
+| `/wiedza` | II. Zasobnik wiedzy (wyzwania + biblioteka z linkami) |
 | `/pomysly` | III. Kreator pomyslów (fiszki + asystent AI / Canwa) |
-| `/admin` | VI. Panel administratora (zgloszenia, dodawanie innowacji) |
+| `/admin` | VI. Panel administratora (zgloszenia, dodawanie innowacji + URL zrodla) |
 
 ## Dostepnosc (WCAG 2.1 AA)
 
@@ -40,9 +62,17 @@ Innowacje indeksowane sa przy seedzie (`SeedRunner`) i przy dodaniu przez panel 
 
 ## Roadmapa (po hackathonie)
 
-- IV. Tester innowacji (zapisy na testy + oceny), V. watki komunikacji, VII. Asystent „Middleman"
-- generator wnioskow (RAG nad regulaminem naboru), powiadomienia e-mail, integracja z baza grantowa (REST/webhook)
+- IV. Tester innowacji, V. watki komunikacji, VII. Asystent „Middleman\"
+- generator wnioskow (RAG nad regulaminem naboru), powiadomienia e-mail, integracja z baza grantowa
 
-## Koszty utrzymania (szacunek)
+## Koszty utrzymania
 
-VPS ~5 EUR/mies. + OpenAI ~0,01 EUR/zapytanie (embeddings + rerank) + 0,2 FTE utrzymywania.
+Model lokalny = 0 EUR/zymtanie. VPS z GPU albo CPU 32 GB (oba modele Q4 mieszcza sie w ~15 GB RAM)
+~15-30 EUR/mies. + 0,2 FTE. Alternatywnie tanie API (OpenAI) ~0,01 EUR/zapytanie.
+
+## Znane limity demo
+
+- Rerank LLM na CPU: ~30-50 s/zgloszenie (latwe do skrocenia: max_tokens, mniejszy model, GPU).
+- BM25 z `text_config=simple`: brak stemmingu PL — sensowne formy slow musza sie zgadzac;
+  wektory to uzupelniaja.
+- In-memory users (demo); przed wdrozeniem: tabela users + migracja.
