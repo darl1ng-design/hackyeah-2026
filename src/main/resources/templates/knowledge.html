@@ -5,6 +5,15 @@
 <header th:replace="~{fragments/layout :: header}"></header>
 <main id="tresc" class="max-w-5xl mx-auto px-4 py-10">
   <h1 class="text-3xl font-bold mb-6">Zasobnik wiedzy</h1>
+  <section aria-labelledby="res-h" class="mb-10">
+    <h2 id="res-h" class="text-xl font-bold mb-3">Zasoby hubMI.pl</h2>
+    <ul class="grid md:grid-cols-3 gap-3">
+      <li th:each="r : ${resources}" class="bg-white rounded-xl shadow p-4 border border-slate-200">
+        <a th:href="${r.url}" target="_blank" rel="noopener"
+           class="font-bold text-blue-800 underline decoration-2 underline-offset-4" th:text="${r.name}"></a>
+      </li>
+    </ul>
+  </section>
   <h2 class="text-xl font-bold mb-3">Wyzwania spoleczne Malopolski</h2>
   <ul class="grid md:grid-cols-2 gap-4 mb-10">
     <li th:each="a : ${areas}" class="bg-white rounded-xl shadow p-5 border border-slate-200">
