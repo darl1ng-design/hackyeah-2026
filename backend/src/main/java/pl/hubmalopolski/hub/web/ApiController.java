@@ -36,6 +36,9 @@ public class ApiController {
     public record InnovationDto(Long id, String title, String summary, String description,
                                 String targetGroup, String status, String region,
                                 String videoUrl, String sourceUrl, AreaDto area) {}
+    public record InnovationRequest(@jakarta.validation.constraints.NotBlank String title,
+                                    String summary, String description, String targetGroup,
+                                    String status, String region, String sourceUrl, Long areaId) {}
     public record ResourceDto(Long id, String name, String url, String kind) {}
     public record IdeaDto(Long id, String title, String essence, String targetGroup,
                           String stage, String description, Instant createdAt) {}
@@ -46,6 +49,9 @@ public class ApiController {
     public record MatchItemDto(InnovationDto innovation, String why, double similarity) {}
     public record MatchResponse(Long reportId, String reportStatus, AreaDto area,
                                 List<MatchItemDto> matches) {}
+    public record ReportDto(Long id, String description, String region, String authorName,
+                            String status, AreaDto area, Instant createdAt) {}
+    public record StatusRequest(@jakarta.validation.constraints.NotBlank String status) {}
     public record AssistantRequest(@jakarta.validation.constraints.NotBlank String message) {}
     public record AssistantReply(String reply) {}
 
@@ -99,16 +105,49 @@ public class ApiController {
 
     // ---- matchmaking (modul I) ----
 
-    @PostMapping("/matches")
-    public MatchResponse match(@RequestBody @jakarta.validation.Valid MatchRequest req) {
-        ProblemReport report = new ProblemReport(req.description(), req.region(), req.authorName());
-        report.setArea(classifier.classify(req.description(), areas.findAll()));
-        reports.save(report);
-        List<MatchItemDto> items = matchmaking.match(req.description()).stream()
-                .map(m -> new MatchItemDto(toDto(m.innovation()), m.why(), m.score()))
-                .toList();
-        return new MatchResponse(report.getId(), report.getStatus(), toDto(report.getArea()), items);
-    }
+        @PostMapping("/matches")
+        public MatchResponse match(@RequestBody @jakarta.validation.Valid MatchRequest req) {
+            ProblemReport report = new ProblemReport(req.description(), req.region(), req.authorName());
+            report.setArea(classifier.classify(req.description(), areas.findAll()));
+            reports.save(report);
+            List<MatchItemDto> items = matchmaking.match(req.description()).stream()
+                    .map(m -> new MatchItemDto(toDto(m.innovation()), m.why(), m.score()))
+                    .toList();
+            return new MatchResponse(report.getId(), report.getStatus(), toDto(report.getArea()), items);
+        }
+
+        @GetMapping("/reports")
+        public List<ReportDto> listReports() {
+            return reports.findAllByOrderByCreatedAtDesc().stream()
+                    .map(r -> new ReportDto(r.getId(), r.getDescription(), r.getRegion(),
+                            r.getAuthorName(), r.getStatus(), toDto(r.getArea()), r.getCreatedAt()))
+                    .toList();
+        }
+
+        // ---- admin (modul VI) — wymagana rola ADMIN (SecurityConfig) ----
+
+        @PostMapping("/admin/innovations")
+        public ResponseEntity<InnovationDto> addInnovation(@RequestBody @jakarta.validation.Valid InnovationRequest req) {
+            Innovation in = new Innovation(req.title(), req.summary(), req.description(),
+                    req.targetGroup(), req.status() != null ? req.status() : "ROZWOJ",
+                    req.region(), null);
+            in.setSourceUrl(req.sourceUrl());
+            if (req.areaId() != null) in.setArea(areas.findById(req.areaId()).orElse(null));
+            innovations.save(in);
+            try { matchmaking.index(in); innovations.save(in); } catch (Exception ignored) {}
+            return ResponseEntity.status(HttpStatus.CREATED).body(toDto(in));
+        }
+
+        @PatchMapping("/admin/reports/{id}/status")
+        public ResponseEntity<ReportDto> setReportStatus(@PathVariable Long id,
+                                                         @RequestBody @jakarta.validation.Valid StatusRequest req) {
+            return reports.findById(id)
+                    .map(r -> { r.setStatus(req.status()); reports.save(r);
+                            return ResponseEntity.ok(new ReportDto(r.getId(), r.getDescription(),
+                                    r.getRegion(), r.getAuthorName(), r.getStatus(),
+                                    toDto(r.getArea()), r.getCreatedAt())); })
+                    .orElseGet(() -> ResponseEntity.notFound().build());
+        }
 
     // ---- fiszki pomyslow (modul III) ----
 

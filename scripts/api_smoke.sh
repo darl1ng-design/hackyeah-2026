@@ -1,7 +1,7 @@
 #!/bin/sh
 # Smoke-test all /api/v1 endpoints against localhost:8080
 C=curl
-B=http://localhost:8080/api/v1
+B=http://localhost:${APP_PORT:-8083}/api/v1
 echo "--- GET /areas"; $C -s $B/areas | head -c 200; echo
 echo "--- GET /innovations?q=toalety"; $C -s "$B/innovations?q=lazienki" | head -c 200; echo
 echo "--- GET /innovations/4"; $C -s $B/innovations/4 | head -c 150; echo
@@ -17,5 +17,8 @@ echo "--- POST /ideas (invalid, expect 400)"; $C -s -o /dev/null -w '%{http_code
 echo "--- GET /ideas"; $C -s $B/ideas | head -c 150; echo
 echo "--- POST /ideas/assistant"; $C -s -X POST -H 'Content-Type: application/json' \
   -d '{"message":"jak sprawdzic czy pomysl ma sens?"}' $B/ideas/assistant | head -c 200; echo
-echo "--- swagger"; $C -s -o /dev/null -w 'ui:%{http_code} ' http://localhost:8080/swagger-ui.html
-$C -s http://localhost:8080/v3/api-docs | python3 -c "import json,sys; d=json.load(sys.stdin); print('paths:', len(d['paths']), 'title:', d['info']['title'])"
+echo "--- GET /reports"; $C -s $B/reports | head -c 120; echo
+echo "--- POST /admin/innovations (anon, expect 401/403)"; $C -s -o /dev/null -w '%{http_code}\n' -X POST -H 'Content-Type: application/json' \
+  -d '{"title":"x"}' $B/admin/innovations
+echo "--- swagger"; $C -s -o /dev/null -w 'ui:%{http_code} ' http://localhost:${APP_PORT:-8083}/swagger-ui.html
+$C -s http://localhost:${APP_PORT:-8083}/v3/api-docs | python3 -c "import json,sys; d=json.load(sys.stdin); print('paths:', len(d['paths']), 'title:', d['info']['title'])"

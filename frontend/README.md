@@ -1,7 +1,7 @@
 # Frontend (modul osobny)
 
-Tutaj powstaje frontend. Backend to osobny modul w `../backend` (Spring Boot,
-Thymeleaf zostaje jako panel admina/demo — frontend komunikuje sie wylacznie z REST API).
+Tutaj powstaje frontend. Backend to osobny modul w `../backend` (Spring Boot, czysto REST —
+Thymeleaf usuniety; frontend komunikuje sie wylacznie z API).
 
 ## Kontrakt API — nic wiecej nie trzeba
 
