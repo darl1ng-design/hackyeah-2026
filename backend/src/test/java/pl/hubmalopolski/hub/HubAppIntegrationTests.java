@@ -8,8 +8,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 @SpringBootTest(properties = "hub.seed-vectors=false")
 class HubAppIntegrationTests {
 
-	@Test
-	void contextLoadsWithDatabase() {
-	}
-
+    @Test
+    void contextLoadsWithDatabase() {
+    }
 }

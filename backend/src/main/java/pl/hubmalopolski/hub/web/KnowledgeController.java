@@ -8,7 +8,9 @@ import pl.hubmalopolski.hub.repo.ChallengeAreaRepository;
 import pl.hubmalopolski.hub.repo.InnovationRepository;
 import pl.hubmalopolski.hub.repo.ResourceRepository;
 
-/** Modul II: Zasobnik wiedzy — obszary wyzwan + biblioteka innowacji + zasoby ROPS. */
+/**
+ * Modul II: Zasobnik wiedzy — obszary wyzwan + biblioteka innowacji + zasoby ROPS.
+ */
 @Controller
 public class KnowledgeController {
 
@@ -18,7 +20,9 @@ public class KnowledgeController {
 
     public KnowledgeController(InnovationRepository innovations, ChallengeAreaRepository areas,
                                ResourceRepository resources) {
-        this.innovations = innovations; this.areas = areas; this.resources = resources;
+        this.innovations = innovations;
+        this.areas = areas;
+        this.resources = resources;
     }
 
     @GetMapping("/wiedza")

@@ -3,25 +3,16 @@ package pl.hubmalopolski.hub.web;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import pl.hubmalopolski.hub.ai.IdeaAssistant;
+import pl.hubmalopolski.hub.ai.ProblemClassifier;
 import pl.hubmalopolski.hub.domain.ChallengeArea;
 import pl.hubmalopolski.hub.domain.Idea;
 import pl.hubmalopolski.hub.domain.Innovation;
 import pl.hubmalopolski.hub.domain.ProblemReport;
-import pl.hubmalopolski.hub.domain.Resource;
-import pl.hubmalopolski.hub.ai.ProblemClassifier;
-import pl.hubmalopolski.hub.match.MatchResult;
 import pl.hubmalopolski.hub.match.MatchmakingService;
-import pl.hubmalopolski.hub.repo.ChallengeAreaRepository;
-import pl.hubmalopolski.hub.repo.IdeaRepository;
-import pl.hubmalopolski.hub.repo.InnovationRepository;
-import pl.hubmalopolski.hub.repo.ProblemReportRepository;
-import pl.hubmalopolski.hub.repo.ResourceRepository;
-
+import pl.hubmalopolski.hub.repo.*;
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 
 /**
  * REST API v1 dla frontendu (Swagger: /swagger-ui.html, spec: /v3/api-docs).
@@ -30,24 +21,6 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1")
 public class ApiController {
-
-    // ---- DTO ----
-    public record AreaDto(Long id, String name, String description) {}
-    public record InnovationDto(Long id, String title, String summary, String description,
-                                String targetGroup, String status, String region,
-                                String videoUrl, String sourceUrl, AreaDto area) {}
-    public record ResourceDto(Long id, String name, String url, String kind) {}
-    public record IdeaDto(Long id, String title, String essence, String targetGroup,
-                          String stage, String description, Instant createdAt) {}
-    public record IdeaRequest(@jakarta.validation.constraints.NotBlank String title,
-                              String essence, String targetGroup, String stage, String description) {}
-    public record MatchRequest(@jakarta.validation.constraints.NotBlank String description,
-                               String region, String authorName) {}
-    public record MatchItemDto(InnovationDto innovation, String why, double similarity) {}
-    public record MatchResponse(Long reportId, String reportStatus, AreaDto area,
-                                List<MatchItemDto> matches) {}
-    public record AssistantRequest(@jakarta.validation.constraints.NotBlank String message) {}
-    public record AssistantReply(String reply) {}
 
     private final InnovationRepository innovations;
     private final ChallengeAreaRepository areas;
@@ -62,12 +35,39 @@ public class ApiController {
                          ResourceRepository resources, IdeaRepository ideas,
                          ProblemReportRepository reports, MatchmakingService matchmaking,
                          ProblemClassifier classifier, IdeaAssistant assistant) {
-        this.innovations = innovations; this.areas = areas; this.resources = resources;
-        this.ideas = ideas; this.reports = reports; this.matchmaking = matchmaking;
-        this.classifier = classifier; this.assistant = assistant;
+        this.innovations = innovations;
+        this.areas = areas;
+        this.resources = resources;
+        this.ideas = ideas;
+        this.reports = reports;
+        this.matchmaking = matchmaking;
+        this.classifier = classifier;
+        this.assistant = assistant;
     }
 
-    // ---- biblioteka / wiedza ----
+    private static boolean matches(Innovation i, String needle) {
+        return contains(i.getTitle(), needle) || contains(i.getSummary(), needle)
+                || contains(i.getDescription(), needle) || contains(i.getTargetGroup(), needle);
+    }
+
+    private static boolean contains(String s, String needle) {
+        return s != null && s.toLowerCase().contains(needle);
+    }
+
+    static InnovationDto toDto(Innovation i) {
+        return new InnovationDto(i.getId(), i.getTitle(), i.getSummary(), i.getDescription(),
+                i.getTargetGroup(), i.getStatus(), i.getRegion(), i.getVideoUrl(),
+                i.getSourceUrl(), toDto(i.getArea()));
+    }
+
+    static AreaDto toDto(ChallengeArea a) {
+        return a == null ? null : new AreaDto(a.getId(), a.getName(), a.getDescription());
+    }
+
+    static IdeaDto toDto(Idea i) {
+        return new IdeaDto(i.getId(), i.getTitle(), i.getEssence(), i.getTargetGroup(),
+                i.getStage(), i.getDescription(), i.getCreatedAt());
+    }
 
     @GetMapping("/innovations")
     public List<InnovationDto> listInnovations(@RequestParam(required = false) Long areaId,
@@ -97,8 +97,6 @@ public class ApiController {
                 .map(r -> new ResourceDto(r.getId(), r.getName(), r.getUrl(), r.getKind())).toList();
     }
 
-    // ---- matchmaking (modul I) ----
-
     @PostMapping("/matches")
     public MatchResponse match(@RequestBody @jakarta.validation.Valid MatchRequest req) {
         ProblemReport report = new ProblemReport(req.description(), req.region(), req.authorName());
@@ -110,7 +108,7 @@ public class ApiController {
         return new MatchResponse(report.getId(), report.getStatus(), toDto(report.getArea()), items);
     }
 
-    // ---- fiszki pomyslow (modul III) ----
+    // ---- biblioteka / wiedza ----
 
     @GetMapping("/ideas")
     public List<IdeaDto> listIdeas() {
@@ -133,29 +131,46 @@ public class ApiController {
         }
     }
 
+    // ---- DTO ----
+    public record AreaDto(Long id, String name, String description) {
+    }
+
+    // ---- matchmaking (modul I) ----
+
+    public record InnovationDto(Long id, String title, String summary, String description,
+                                String targetGroup, String status, String region,
+                                String videoUrl, String sourceUrl, AreaDto area) {
+    }
+
+    // ---- fiszki pomyslow (modul III) ----
+
+    public record ResourceDto(Long id, String name, String url, String kind) {
+    }
+
+    public record IdeaDto(Long id, String title, String essence, String targetGroup,
+                          String stage, String description, Instant createdAt) {
+    }
+
+    public record IdeaRequest(@jakarta.validation.constraints.NotBlank String title,
+                              String essence, String targetGroup, String stage, String description) {
+    }
+
     // ---- mappery ----
 
-    private static boolean matches(Innovation i, String needle) {
-        return contains(i.getTitle(), needle) || contains(i.getSummary(), needle)
-                || contains(i.getDescription(), needle) || contains(i.getTargetGroup(), needle);
+    public record MatchRequest(@jakarta.validation.constraints.NotBlank String description,
+                               String region, String authorName) {
     }
 
-    private static boolean contains(String s, String needle) {
-        return s != null && s.toLowerCase().contains(needle);
+    public record MatchItemDto(InnovationDto innovation, String why, double similarity) {
     }
 
-    static InnovationDto toDto(Innovation i) {
-        return new InnovationDto(i.getId(), i.getTitle(), i.getSummary(), i.getDescription(),
-                i.getTargetGroup(), i.getStatus(), i.getRegion(), i.getVideoUrl(),
-                i.getSourceUrl(), toDto(i.getArea()));
+    public record MatchResponse(Long reportId, String reportStatus, AreaDto area,
+                                List<MatchItemDto> matches) {
     }
 
-    static AreaDto toDto(ChallengeArea a) {
-        return a == null ? null : new AreaDto(a.getId(), a.getName(), a.getDescription());
+    public record AssistantRequest(@jakarta.validation.constraints.NotBlank String message) {
     }
 
-    static IdeaDto toDto(Idea i) {
-        return new IdeaDto(i.getId(), i.getTitle(), i.getEssence(), i.getTargetGroup(),
-                i.getStage(), i.getDescription(), i.getCreatedAt());
+    public record AssistantReply(String reply) {
     }
 }

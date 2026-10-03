@@ -3,42 +3,65 @@
 <head th:replace="~{fragments/layout :: head('Panel administratora')}"></head>
 <body class="bg-slate-50 text-slate-900">
 <header th:replace="~{fragments/layout :: header}"></header>
-<main id="tresc" class="max-w-5xl mx-auto px-4 py-10">
-  <h1 class="text-3xl font-bold mb-6">Panel administratora</h1>
-  <h2 class="text-xl font-bold mb-3">Zgloszenia problemow</h2>
-  <table class="w-full bg-white rounded-xl shadow border border-slate-200 mb-10 text-left">
-    <thead><tr class="border-b"><th class="p-3">ID</th><th class="p-3">Problem</th><th class="p-3">Obszar</th><th class="p-3">Status</th><th class="p-3">Akcja</th></tr></thead>
-    <tbody>
-      <tr th:each="r : ${reports}" class="border-b">
-        <td class="p-3" th:text="${r.id}"></td>
-        <td class="p-3 max-w-md" th:text="${#strings.abbreviate(r.description, 90)}"></td>
-        <td class="p-3" th:text="${r.area != null} ? ${r.area.name} : '-'"></td>
-        <td class="p-3 font-bold" th:text="${r.status}"></td>
-        <td class="p-3">
-          <form th:action="@{'/admin/zgloszenia/' + ${r.id} + '/status'}" method="post" class="flex gap-1">
-            <select name="status" class="border rounded p-1"><option>PRZYPISANE</option><option>W_REALIZACJI</option><option>ZAMKNIETE</option></select>
-            <button class="bg-blue-800 text-white rounded px-2">Zapisz</button>
-          </form>
-        </td>
-      </tr>
-    </tbody>
-  </table>
-  <h2 class="text-xl font-bold mb-3">Dodaj innowacje (trafi do matchmakeingu)</h2>
-  <form th:action="@{/admin/innowacje}" method="post" class="bg-white rounded-xl shadow border border-slate-200 p-5 grid md:grid-cols-2 gap-4">
-    <div><label class="block font-bold mb-1" for="n-title">Tytul *</label><input id="n-title" name="title" required class="w-full border border-slate-400 rounded p-2"></div>
-    <div><label class="block font-bold mb-1" for="n-area">Obszar</label>
-      <select id="n-area" name="areaId" class="w-full border border-slate-400 rounded p-2">
-        <option th:each="a : ${areas}" th:value="${a.id}" th:text="${a.name}"></option></select></div>
-    <div class="md:col-span-2"><label class="block font-bold mb-1" for="n-summary">Krotki opis</label>
-      <input id="n-summary" name="summary" class="w-full border border-slate-400 rounded p-2"></div>
-    <div class="md:col-span-2"><label class="block font-bold mb-1" for="n-desc">Opis</label>
-      <textarea id="n-desc" name="description" rows="3" class="w-full border border-slate-400 rounded p-2"></textarea></div>
-    <div><label class="block font-bold mb-1" for="n-group">Grupa docelowa</label><input id="n-group" name="targetGroup" class="w-full border border-slate-400 rounded p-2"></div>
-    <div><label class="block font-bold mb-1" for="n-region">Region</label><input id="n-region" name="region" class="w-full border border-slate-400 rounded p-2"></div>
-    <div class="md:col-span-2"><label class="block font-bold mb-1" for="n-src">Link zrodlowy (URL)</label>
-      <input id="n-src" name="sourceUrl" type="url" class="w-full border border-slate-400 rounded p-2" placeholder="https://..."></div>
-    <button class="bg-blue-800 text-white font-bold rounded-lg px-5 py-2 h-fit">Dodaj i zaindeksuj</button>
-  </form>
+<main class="max-w-5xl mx-auto px-4 py-10" id="tresc">
+    <h1 class="text-3xl font-bold mb-6">Panel administratora</h1>
+    <h2 class="text-xl font-bold mb-3">Zgloszenia problemow</h2>
+    <table class="w-full bg-white rounded-xl shadow border border-slate-200 mb-10 text-left">
+        <thead>
+        <tr class="border-b">
+            <th class="p-3">ID</th>
+            <th class="p-3">Problem</th>
+            <th class="p-3">Obszar</th>
+            <th class="p-3">Status</th>
+            <th class="p-3">Akcja</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr class="border-b" th:each="r : ${reports}">
+            <td class="p-3" th:text="${r.id}"></td>
+            <td class="p-3 max-w-md" th:text="${#strings.abbreviate(r.description, 90)}"></td>
+            <td class="p-3" th:text="${r.area != null} ? ${r.area.name} : '-'"></td>
+            <td class="p-3 font-bold" th:text="${r.status}"></td>
+            <td class="p-3">
+                <form class="flex gap-1" method="post" th:action="@{'/admin/zgloszenia/' + ${r.id} + '/status'}">
+                    <select class="border rounded p-1" name="status">
+                        <option>PRZYPISANE</option>
+                        <option>W_REALIZACJI</option>
+                        <option>ZAMKNIETE</option>
+                    </select>
+                    <button class="bg-blue-800 text-white rounded px-2">Zapisz</button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    <h2 class="text-xl font-bold mb-3">Dodaj innowacje (trafi do matchmakeingu)</h2>
+    <form class="bg-white rounded-xl shadow border border-slate-200 p-5 grid md:grid-cols-2 gap-4" method="post"
+          th:action="@{/admin/innowacje}">
+        <div><label class="block font-bold mb-1" for="n-title">Tytul *</label><input class="w-full border border-slate-400 rounded p-2" id="n-title" name="title"
+                                                                                     required>
+        </div>
+        <div><label class="block font-bold mb-1" for="n-area">Obszar</label>
+            <select class="w-full border border-slate-400 rounded p-2" id="n-area" name="areaId">
+                <option th:each="a : ${areas}" th:text="${a.name}" th:value="${a.id}"></option>
+            </select></div>
+        <div class="md:col-span-2"><label class="block font-bold mb-1" for="n-summary">Krotki opis</label>
+            <input class="w-full border border-slate-400 rounded p-2" id="n-summary" name="summary"></div>
+        <div class="md:col-span-2"><label class="block font-bold mb-1" for="n-desc">Opis</label>
+            <textarea class="w-full border border-slate-400 rounded p-2" id="n-desc" name="description"
+                      rows="3"></textarea></div>
+        <div><label class="block font-bold mb-1" for="n-group">Grupa docelowa</label><input class="w-full border border-slate-400 rounded p-2"
+                                                                                            id="n-group"
+                                                                                            name="targetGroup">
+        </div>
+        <div><label class="block font-bold mb-1" for="n-region">Region</label><input class="w-full border border-slate-400 rounded p-2" id="n-region"
+                                                                                     name="region">
+        </div>
+        <div class="md:col-span-2"><label class="block font-bold mb-1" for="n-src">Link zrodlowy (URL)</label>
+            <input class="w-full border border-slate-400 rounded p-2" id="n-src" name="sourceUrl" placeholder="https://..."
+                   type="url"></div>
+        <button class="bg-blue-800 text-white font-bold rounded-lg px-5 py-2 h-fit">Dodaj i zaindeksuj</button>
+    </form>
 </main>
 </body>
 </html>

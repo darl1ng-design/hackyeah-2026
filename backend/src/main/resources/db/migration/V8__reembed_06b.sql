@@ -4,11 +4,15 @@
 -- every innovation on next app start (vector_id reset to null below).
 -- Guarded: on a fresh DB Spring AI has not created vector_store yet (Flyway
 -- runs before initialize-schema) and there is nothing to re-embed.
-do $$
+do
+$$
 begin
-    if to_regclass('public.vector_store') is not null then
-        delete from vector_store;
-        alter table vector_store alter column embedding type vector(1024);
-    end if;
-    update innovation set vector_id = null;
+    if
+to_regclass('public.vector_store') is not null then
+delete
+from vector_store;
+alter table vector_store alter column embedding type vector(1024);
+end if;
+update innovation
+set vector_id = null;
 end $$;

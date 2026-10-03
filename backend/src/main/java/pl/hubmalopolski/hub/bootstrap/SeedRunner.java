@@ -27,7 +27,8 @@ public class SeedRunner implements ApplicationRunner {
     private boolean seedVectors;
 
     public SeedRunner(InnovationRepository innovations, MatchmakingService matchmaking) {
-        this.innovations = innovations; this.matchmaking = matchmaking;
+        this.innovations = innovations;
+        this.matchmaking = matchmaking;
     }
 
     @Override

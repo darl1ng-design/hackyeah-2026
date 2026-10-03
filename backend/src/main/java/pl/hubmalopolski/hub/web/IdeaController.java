@@ -10,7 +10,9 @@ import pl.hubmalopolski.hub.repo.IdeaRepository;
 
 import java.util.Map;
 
-/** Modul III: fiszki pomyslów + asystent AI. */
+/**
+ * Modul III: fiszki pomyslów + asystent AI.
+ */
 @Controller
 @RequestMapping("/pomysly")
 public class IdeaController {
@@ -19,7 +21,8 @@ public class IdeaController {
     private final IdeaAssistant assistant;
 
     public IdeaController(IdeaRepository ideas, IdeaAssistant assistant) {
-        this.ideas = ideas; this.assistant = assistant;
+        this.ideas = ideas;
+        this.assistant = assistant;
     }
 
     @GetMapping

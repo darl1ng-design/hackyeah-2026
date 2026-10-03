@@ -12,7 +12,9 @@ import pl.hubmalopolski.hub.match.MatchmakingService;
 import pl.hubmalopolski.hub.repo.ChallengeAreaRepository;
 import pl.hubmalopolski.hub.repo.ProblemReportRepository;
 
-/** Modul I: zglos problem -> dostan dopasowane innowacje. */
+/**
+ * Modul I: zglos problem -> dostan dopasowane innowacje.
+ */
 @Controller
 public class MatchController {
 
@@ -23,12 +25,16 @@ public class MatchController {
 
     public MatchController(MatchmakingService matchmaking, ProblemReportRepository reports,
                            ProblemClassifier classifier, ChallengeAreaRepository areas) {
-        this.matchmaking = matchmaking; this.reports = reports;
-        this.classifier = classifier; this.areas = areas;
+        this.matchmaking = matchmaking;
+        this.reports = reports;
+        this.classifier = classifier;
+        this.areas = areas;
     }
 
     @GetMapping("/match")
-    public String form() { return "match_form"; }
+    public String form() {
+        return "match_form";
+    }
 
     @PostMapping("/match")
     public String match(@RequestParam String description,

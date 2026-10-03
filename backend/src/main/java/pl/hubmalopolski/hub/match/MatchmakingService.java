@@ -7,12 +7,9 @@ import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
-
 import pl.hubmalopolski.hub.domain.Innovation;
 import pl.hubmalopolski.hub.repo.InnovationRepository;
-
 import java.util.*;
 
 /**
@@ -24,9 +21,8 @@ import java.util.*;
 @Service
 public class MatchmakingService {
 
-    private static final Logger log = LoggerFactory.getLogger(MatchmakingService.class);
     static final String META_INNOVATION_ID = "innovationId";
-
+    private static final Logger log = LoggerFactory.getLogger(MatchmakingService.class);
     private final VectorStore vectorStore;
     private final ChatClient chatClient;
     private final InnovationRepository innovations;
@@ -43,7 +39,13 @@ public class MatchmakingService {
         this.innovations = innovations;
     }
 
-    /** Indeksuje innowacje w vector_store (wyzwalane przy seedzie i przy tworzeniu przez admina). */
+    private static String nullSafe(String s) {
+        return s == null ? "" : s;
+    }
+
+    /**
+     * Indeksuje innowacje w vector_store (wyzwalane przy seedzie i przy tworzeniu przez admina).
+     */
     public void index(Innovation in) {
         String text = String.join("\n",
                 "Tytul: " + in.getTitle(),
@@ -121,20 +123,20 @@ public class MatchmakingService {
             StringBuilder sb = new StringBuilder();
             for (Innovation in : candidates) {
                 sb.append("- id=").append(in.getId()).append(" | ").append(in.getTitle())
-                  .append(" | ").append(nullSafe(in.getSummary()))
-                  .append(" | grupa: ").append(nullSafe(in.getTargetGroup())).append("\n");
+                        .append(" | ").append(nullSafe(in.getSummary()))
+                        .append(" | grupa: ").append(nullSafe(in.getTargetGroup())).append("\n");
             }
             MatchExplanations out = chatClient.prompt()
                     .user(u -> u.text("""
-                        Problem zgloszony przez mieszkanca:
-                        {problem}
-
-                        Kandydujace innowacje spoleczne:
-                        {candidates}
-
-                        Wybierz maksymalnie 5 najlepiej dopasowanych innowacji. Dla kazanej podaj
-                        innovationId oraz why — wylacznie jedno zdanie po polsku, najwyzej 20 slow.
-                        """).param("problem", problemText).param("candidates", sb.toString()))
+                            Problem zgloszony przez mieszkanca:
+                            {problem}
+                            
+                            Kandydujace innowacje spoleczne:
+                            {candidates}
+                            
+                            Wybierz maksymalnie 5 najlepiej dopasowanych innowacji. Dla kazanej podaj
+                            innovationId oraz why — wylacznie jedno zdanie po polsku, najwyzej 20 slow.
+                            """).param("problem", problemText).param("candidates", sb.toString()))
                     .call()
                     .entity(MatchExplanations.class);
             if (out != null && out.matches() != null && !out.matches().isEmpty()) {
@@ -168,6 +170,4 @@ public class MatchmakingService {
                         displayScore.apply(i.getId())))
                 .toList();
     }
-
-    private static String nullSafe(String s) { return s == null ? "" : s; }
 }

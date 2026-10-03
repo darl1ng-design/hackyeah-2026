@@ -1,36 +1,53 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="pl">
+<html lang="pl" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" xmlns:th="http://www.thymeleaf.org">
 <head th:fragment="head(title)">
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title th:text="${title} + ' — Hub Innowacji Spolecznych'">Hub</title>
-  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-  <style>
-    :root { font-size: 17px; }                       /* wieksza baza dla seniorow */
-    .skip-link { position:absolute; left:-9999px; }
-    .skip-link:focus { left:1rem; top:1rem; z-index:50; background:#1d4ed8; color:#fff; padding:.5rem 1rem; }
-    a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
-      outline: 3px solid #1d4ed8; outline-offset: 2px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <title th:text="${title} + ' — Hub Innowacji Spolecznych'">Hub</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        :root {
+            font-size: 17px;
+        }
+
+        /* wieksza baza dla seniorow */
+        .skip-link {
+            position: absolute;
+            left: -9999px;
+        }
+
+        .skip-link:focus {
+            left: 1rem;
+            top: 1rem;
+            z-index: 50;
+            background: #1d4ed8;
+            color: #fff;
+            padding: .5rem 1rem;
+        }
+
+        a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
+            outline: 3px solid #1d4ed8;
+            outline-offset: 2px;
+        }
+    </style>
 </head>
 <body>
-<header th:fragment="header" class="bg-blue-900 text-white">
-  <a href="#tresc" class="skip-link">Przeskocz do tresci</a>
-  <nav aria-label="Glowna nawigacja" class="max-w-5xl mx-auto flex flex-wrap items-center gap-4 px-4 py-4">
-    <a th:href="@{/}" class="font-bold text-lg">Hub Innowacji Spolecznych</a>
-    <a th:href="@{/match}" class="underline decoration-2 underline-offset-4 hover:no-underline">Zglos problem</a>
-    <a th:href="@{/wiedza}" class="underline decoration-2 underline-offset-4 hover:no-underline">Zasobnik wiedzy</a>
-    <a th:href="@{/pomysly}" class="underline decoration-2 underline-offset-4 hover:no-underline">Pomysly</a>
-    <span class="ml-auto flex gap-3 items-center">
-      <span sec:authorize="isAuthenticated()" sec:authentication="name" class="text-sm"></span>
-      <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin}" class="underline decoration-2 underline-offset-4">Panel admina</a>
-      <a sec:authorize="!isAuthenticated()" th:href="@{/login}" class="underline decoration-2 underline-offset-4">Zaloguj</a>
-      <form sec:authorize="isAuthenticated()" th:action="@{/logout}" method="post" class="inline">
-        <button type="submit" class="underline decoration-2 underline-offset-4">Wyloguj</button>
+<header class="bg-blue-900 text-white" th:fragment="header">
+    <a class="skip-link" href="#tresc">Przeskocz do tresci</a>
+    <nav aria-label="Glowna nawigacja" class="max-w-5xl mx-auto flex flex-wrap items-center gap-4 px-4 py-4">
+        <a class="font-bold text-lg" th:href="@{/}">Hub Innowacji Spolecznych</a>
+        <a class="underline decoration-2 underline-offset-4 hover:no-underline" th:href="@{/match}">Zglos problem</a>
+        <a class="underline decoration-2 underline-offset-4 hover:no-underline" th:href="@{/wiedza}">Zasobnik wiedzy</a>
+        <a class="underline decoration-2 underline-offset-4 hover:no-underline" th:href="@{/pomysly}">Pomysly</a>
+        <span class="ml-auto flex gap-3 items-center">
+      <span class="text-sm" sec:authentication="name" sec:authorize="isAuthenticated()"></span>
+      <a class="underline decoration-2 underline-offset-4" sec:authorize="hasRole('ADMIN')" th:href="@{/admin}">Panel admina</a>
+      <a class="underline decoration-2 underline-offset-4" sec:authorize="!isAuthenticated()" th:href="@{/login}">Zaloguj</a>
+      <form class="inline" method="post" sec:authorize="isAuthenticated()" th:action="@{/logout}">
+        <button class="underline decoration-2 underline-offset-4" type="submit">Wyloguj</button>
       </form>
     </span>
-  </nav>
+    </nav>
 </header>
 <main th:fragment="scripts"></main>
 </body>

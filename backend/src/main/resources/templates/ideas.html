@@ -3,62 +3,73 @@
 <head th:replace="~{fragments/layout :: head('Kreator pomyslów')}"></head>
 <body class="bg-slate-50 text-slate-900">
 <header th:replace="~{fragments/layout :: header}"></header>
-<main id="tresc" class="max-w-5xl mx-auto px-4 py-10 grid md:grid-cols-2 gap-8">
-  <section aria-labelledby="form-h">
-    <h1 id="form-h" class="text-2xl font-bold mb-4">Fiszka nowego pomyslu</h1>
-    <form th:action="@{/pomysly}" method="post" class="space-y-4">
-      <div><label for="title" class="block font-bold mb-1">Nazwa pomyslu *</label>
-        <input id="title" name="title" required class="w-full rounded-lg border border-slate-400 p-3"></div>
-      <div><label for="essence" class="block font-bold mb-1">Na czym polega?</label>
-        <textarea id="essence" name="essence" rows="3" class="w-full rounded-lg border border-slate-400 p-3"></textarea></div>
-      <div class="grid grid-cols-2 gap-3">
-        <div><label for="targetGroup" class="block font-bold mb-1">Komu sluzy?</label>
-          <input id="targetGroup" name="targetGroup" class="w-full rounded-lg border border-slate-400 p-3"></div>
-        <div><label for="stage" class="block font-bold mb-1">Etap</label>
-          <select id="stage" name="stage" class="w-full rounded-lg border border-slate-400 p-3">
-            <option>MYS</option><option>PROTOTYP</option><option>TESTY</option><option>WDROZENIE</option>
-          </select></div>
-      </div>
-      <button class="bg-blue-800 text-white font-bold px-5 py-3 rounded-lg hover:bg-blue-900">Opublikuj fiszke</button>
-    </form>
-  </section>
-  <section aria-labelledby="ai-h">
-    <h2 id="ai-h" class="text-2xl font-bold mb-4">Asystent AI (Canwa innowacji)</h2>
-    <p class="text-sm mb-3"><a href="https://rops.krakow.pl/mpliki/IS/Moj_folder/INNO_AGH_-_SOCIAL_CANVAS.pdf"
-       target="_blank" rel="noopener" class="text-blue-800 underline decoration-2 underline-offset-4 font-bold">
-       Pobierz Canvas Innowacji (PDF)</a></p>
-    <div id="chat" class="bg-white rounded-xl border border-slate-200 p-4 h-64 overflow-y-auto space-y-3 mb-3" aria-live="polite">
-      <p class="text-slate-600">Napisz, na czym polega Twoj pomysl — pomoge go rozwinac.</p>
-    </div>
-    <form id="chatForm" class="flex gap-2">
-      <label for="chatInput" class="sr-only">Wiadomosc do asystenta</label>
-      <input id="chatInput" class="flex-1 rounded-lg border border-slate-400 p-3" placeholder="np. Chce organizowac spacery dla samotnych seniorow...">
-      <button class="bg-blue-800 text-white font-bold px-4 rounded-lg">Wyślij</button>
-    </form>
-    <h2 class="text-2xl font-bold mt-8 mb-3">Zgloszone fiszki</h2>
-    <ul class="space-y-3">
-      <li th:each="i : ${ideas}" class="bg-white rounded-xl border border-slate-200 p-4">
-        <strong th:text="${i.title}"></strong> <span class="text-xs font-bold bg-slate-200 rounded px-2" th:text="${i.stage}"></span>
-        <p class="text-sm text-slate-700 mt-1" th:text="${i.essence}"></p>
-      </li>
-    </ul>
-  </section>
+<main class="max-w-5xl mx-auto px-4 py-10 grid md:grid-cols-2 gap-8" id="tresc">
+    <section aria-labelledby="form-h">
+        <h1 class="text-2xl font-bold mb-4" id="form-h">Fiszka nowego pomyslu</h1>
+        <form class="space-y-4" method="post" th:action="@{/pomysly}">
+            <div><label class="block font-bold mb-1" for="title">Nazwa pomyslu *</label>
+                <input class="w-full rounded-lg border border-slate-400 p-3" id="title" name="title" required></div>
+            <div><label class="block font-bold mb-1" for="essence">Na czym polega?</label>
+                <textarea class="w-full rounded-lg border border-slate-400 p-3" id="essence" name="essence"
+                          rows="3"></textarea></div>
+            <div class="grid grid-cols-2 gap-3">
+                <div><label class="block font-bold mb-1" for="targetGroup">Komu sluzy?</label>
+                    <input class="w-full rounded-lg border border-slate-400 p-3" id="targetGroup" name="targetGroup">
+                </div>
+                <div><label class="block font-bold mb-1" for="stage">Etap</label>
+                    <select class="w-full rounded-lg border border-slate-400 p-3" id="stage" name="stage">
+                        <option>MYS</option>
+                        <option>PROTOTYP</option>
+                        <option>TESTY</option>
+                        <option>WDROZENIE</option>
+                    </select></div>
+            </div>
+            <button class="bg-blue-800 text-white font-bold px-5 py-3 rounded-lg hover:bg-blue-900">Opublikuj fiszke
+            </button>
+        </form>
+    </section>
+    <section aria-labelledby="ai-h">
+        <h2 class="text-2xl font-bold mb-4" id="ai-h">Asystent AI (Canwa innowacji)</h2>
+        <p class="text-sm mb-3"><a class="text-blue-800 underline decoration-2 underline-offset-4 font-bold"
+                                   href="https://rops.krakow.pl/mpliki/IS/Moj_folder/INNO_AGH_-_SOCIAL_CANVAS.pdf" rel="noopener"
+                                   target="_blank">
+            Pobierz Canvas Innowacji (PDF)</a></p>
+        <div aria-live="polite" class="bg-white rounded-xl border border-slate-200 p-4 h-64 overflow-y-auto space-y-3 mb-3"
+             id="chat">
+            <p class="text-slate-600">Napisz, na czym polega Twoj pomysl — pomoge go rozwinac.</p>
+        </div>
+        <form class="flex gap-2" id="chatForm">
+            <label class="sr-only" for="chatInput">Wiadomosc do asystenta</label>
+            <input class="flex-1 rounded-lg border border-slate-400 p-3" id="chatInput"
+                   placeholder="np. Chce organizowac spacery dla samotnych seniorow...">
+            <button class="bg-blue-800 text-white font-bold px-4 rounded-lg">Wyślij</button>
+        </form>
+        <h2 class="text-2xl font-bold mt-8 mb-3">Zgloszone fiszki</h2>
+        <ul class="space-y-3">
+            <li class="bg-white rounded-xl border border-slate-200 p-4" th:each="i : ${ideas}">
+                <strong th:text="${i.title}"></strong> <span class="text-xs font-bold bg-slate-200 rounded px-2"
+                                                             th:text="${i.stage}"></span>
+                <p class="text-sm text-slate-700 mt-1" th:text="${i.essence}"></p>
+            </li>
+        </ul>
+    </section>
 </main>
 <script>
-  const form = document.getElementById('chatForm');
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const input = document.getElementById('chatInput');
-    const chat = document.getElementById('chat');
-    const msg = input.value.trim(); if (!msg) return;
-    chat.insertAdjacentHTML('beforeend', '<p class="font-bold text-right">' + msg.replace(/</g,'&lt;') + '</p>');
-    input.value = '';
-    const body = new URLSearchParams({ message: msg });
-    const res = await fetch('/pomysly/asystent', { method: 'POST', body });
-    const data = await res.json();
-    chat.insertAdjacentHTML('beforeend', '<p class="text-slate-800 bg-slate-100 rounded p-2">' + data.reply.replace(/</g,'&lt;') + '</p>');
-    chat.scrollTop = chat.scrollHeight;
-  });
+    const form = document.getElementById('chatForm');
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const input = document.getElementById('chatInput');
+        const chat = document.getElementById('chat');
+        const msg = input.value.trim();
+        if (!msg) return;
+        chat.insertAdjacentHTML('beforeend', '<p class="font-bold text-right">' + msg.replace(/</g, '&lt;') + '</p>');
+        input.value = '';
+        const body = new URLSearchParams({message: msg});
+        const res = await fetch('/pomysly/asystent', {method: 'POST', body});
+        const data = await res.json();
+        chat.insertAdjacentHTML('beforeend', '<p class="text-slate-800 bg-slate-100 rounded p-2">' + data.reply.replace(/</g, '&lt;') + '</p>');
+        chat.scrollTop = chat.scrollHeight;
+    });
 </script>
 </body>
 </html>
