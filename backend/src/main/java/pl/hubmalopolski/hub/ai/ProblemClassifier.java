@@ -6,15 +6,17 @@ import pl.hubmalopolski.hub.domain.ChallengeArea;
 
 import java.util.List;
 
-/** Przypisuje zgloszenie do obszaru wyzwan (Mapa Wyzwan Spolecznych) — structured output. */
+/**
+ * Przypisuje zgloszenie do obszaru wyzwan (Mapa Wyzwan Spolecznych) — structured output.
+ */
 @Service
 public class ProblemClassifier {
 
-    public record AreaChoice(Long areaId) {}
-
     private final ChatClient chatClient;
 
-    public ProblemClassifier(ChatClient chatClient) { this.chatClient = chatClient; }
+    public ProblemClassifier(ChatClient chatClient) {
+        this.chatClient = chatClient;
+    }
 
     public ChallengeArea classify(String problemText, List<ChallengeArea> areas) {
         try {
@@ -32,5 +34,8 @@ public class ProblemClassifier {
             // bez LLM zostawiamy raport bez obszaru — admin przypisze recznie
         }
         return null;
+    }
+
+    public record AreaChoice(Long areaId) {
     }
 }
