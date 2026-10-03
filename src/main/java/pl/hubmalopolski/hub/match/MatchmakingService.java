@@ -146,6 +146,10 @@ public class MatchmakingService {
                     if (in != null) results.add(new MatchResult(in, m.why(),
                             displayScore.apply(in.getId())));
                 }
+                // LLM decyduje KTORE trafiaja na liste (i daje why); wyswietlane % to
+                // similarity — wiec sortujemy po niej, inaczej top wyniku moze byc
+                // ponizej slabzego (sprzecznosc widoczna dla uzytkownika).
+                results.sort(Comparator.comparingDouble(MatchResult::score).reversed());
                 if (!results.isEmpty()) return results;
             }
         } catch (Exception e) {
