@@ -3,3 +3,4 @@
 __pycache__/
 docs/scratchpad/
 .env.bak.*
+.claude/settings.local.json

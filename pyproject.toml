@@ -19,3 +19,4 @@ pythonpath = ["."]
 [tool.pyright]
 venvPath = "."
 venv = ".venv"
+typeCheckingMode = "standard"  # basedpyright default "recommended" floods reportUnknown*
