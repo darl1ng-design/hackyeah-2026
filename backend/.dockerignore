@@ -1,0 +1,11 @@
+target/
+.git/
+.venv/
+docs/
+scripts/
+app.log
+HELP.md
+*.md
+.dockerignore
+Dockerfile
+docker-compose.yml
