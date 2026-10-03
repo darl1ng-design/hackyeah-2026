@@ -1,111 +1,88 @@
-# Hub Innowacji Spolecznych — MVP (HackYeah / ROPS Krakow)
+# Małopolski Hub Innowacji Społecznych
 
-Spring Boot 4.1 + Spring AI 2.0 + REST API + Postgres 18 (pgvector + Timescale pg_textsearch BM25)
-+ llama.cpp (Qwen3-Embedding-0.6B, Qwen3-4B-Instruct) — **100% lokalne, zero API, zero kosztów zapytan**.
+Projekt Maven z modułem `backend/` (Spring Boot 4.1, Spring AI 2.0, PostgreSQL)
+oraz osobnym `frontend/`. Główny `pom.xml` zarządza wspólnymi zależnościami.
 
-Matchmaking spoleczny (modul I, obligatoryjny) + Zasobnik wiedzy (II) + Kreator pomyslów (III) + Panel admina (VI) — wszystko przez REST API; UI buduje modul `frontend/`.
+## Uruchomienie i testy backendu
 
-## Struktura modułów
-
-| Katalog | Zawartosc |
-|---|---|
-| `backend/` | Spring Boot REST API (bez UI — Thymeleaf usuniety); build obrazu `app` w compose |
-| `frontend/` | osobny modul frontendowy (patrz `frontend/README.md` — kontrakt = Swagger) |
-| `docker/` | obraz bazy (pg18 + pgvector + pg_textsearch + stopwordy PL) |
-| `openapi.json/.yaml` | snapshot kontraktu API dla codegenu frontendu |
-
-## Uruchomienie
+Backend wymaga PostgreSQL z rozszerzeniami pgvector i pg_textsearch. Parametry
+połączenia: `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASS`. Konfiguracja
+modeli lokalnych używa `LLM_EMBED_BASE_URL` i `LLM_CHAT_BASE_URL`. Migracje
+Flyway uruchamiają się automatycznie przy starcie aplikacji.
 
 ```bash
-# 1. modele (~3 GB GGUF; automatyczne przy pierwszym `docker compose up`,
-#    albo recznie ponizej — skrypt pomija istniejace pliki, wznawia przerwane)
-sh scripts/fetch_models.sh
-# 2. wszystko: modele + db (pg18+pgvector+bm25) + embed (0.6B) + chat (4B) + aplikacja
-docker compose up -d --build           # http://localhost:8083
+mvn -pl backend test
+mvn -pl backend spring-boot:run
 ```
 
-Katalog modeli to `./models` obok `docker-compose.yml` (nadpisz przez `MODELS_DIR`). `docker compose down`
-zostawia dane w wolumenie `hub-pgdata`; `down -v` czyści bazę do zera.
+API działa domyślnie na porcie 8080 (`8083` przy mapowaniu z `docker-compose.yml`).
+Swagger UI: `/swagger-ui.html`; aktualny JSON: `/v3/api-docs`. Pliki
+`openapi.json` i `openapi.yaml` w katalogu głównym są snapshotami tego kontraktu.
 
-Konta demonstracyjne: `admin/admin123` (rola ADMIN dla `/api/v1/admin/**`), `user/user123`.
-Bez chatu aplikacja starta i dziala — matchmaking fallbackuje do kolejnosci RRF (wektor + BM25).
+## Konta, sesja i CSRF
 
-## API dla frontendu
+Mieszkaniec może bez konta zgłosić problem, uruchomić dopasowanie, rozmawiać
+z asystentem i przesłać pomysł. Pomysły mieszkańców trafiają do moderacji.
+Opcjonalne konto daje dostęp do `GET /api/v1/ideas?mine=true`, gdzie widać także
+własne pomysły oczekujące na moderację. Rejestracja to e-mail i hasło (minimum
+12 znaków), obecnie bez potwierdzania adresu e-mail.
 
-REST pod `/api/v1/**` — jedyne UI-to-backend API (Thymeleaf usuniety; frontend w `frontend/`):
+Pracownicy i administratorzy logują się. Konta początkowe są tworzone z par
+zmiennych środowiskowych `HUB_STAFF_EMAIL` / `HUB_STAFF_PASSWORD` oraz
+`HUB_ADMIN_EMAIL` / `HUB_ADMIN_PASSWORD`. Każda skonfigurowana para musi mieć
+hasło o długości co najmniej 12 znaków. Nie ma kont z domyślnymi hasłami.
+Zmienne są przekazywane także przez `docker-compose.yml`.
 
-| Metoda | Sciezka | Opis |
+Klient przeglądarkowy:
+
+1. Pobiera `GET /api/v1/csrf` i zachowuje sesję oraz zwrócony token.
+2. Przy każdym `POST` i `PATCH` wysyła token w nagłówku `X-CSRF-TOKEN`
+   (dla formularza logowania może użyć pola `_csrf`). W `fetch` ustawia
+   `credentials: 'include'`.
+3. Rejestruje konto przez `POST /api/v1/register`, jeśli użytkownik chce
+   korzystać z „Moich pomysłów”. Loguje się przez `POST /login` z formularzem
+   `username` (adres e-mail) i `password`; po zalogowaniu ponownie pobiera
+   token CSRF. `GET /api/v1/me` zwraca e-mail i role; bez sesji zwraca 401.
+
+Publiczne odczyty katalogu i zatwierdzonych pomysłów nie wymagają sesji.
+`GET /api/v1/reports` wymaga roli STAFF lub ADMIN, a `/api/v1/admin/**`
+wymaga roli ADMIN. Żądania zmieniające dane wymagają tokenu CSRF także wtedy,
+gdy są dostępne dla gościa.
+
+## API v1
+
+| Metoda | Ścieżka | Opis |
 |---|---|---|
-| GET | `/api/v1/innovations?areaId=&q=` | biblioteka innowacji (filtr obszaru / slowo kluczowe) |
-| GET | `/api/v1/innovations/{id}` | jedna innowacja (404 jesli brak) |
-| GET | `/api/v1/areas` | obszary Mapy Wyzwan |
-| GET | `/api/v1/resources` | zasoby ROPS |
-| POST | `/api/v1/matches` | `{description, region?, authorName?}` -> `{reportId, reportStatus, area, matches[]}` (matchmaking hybrydowy) |
-| GET | `/api/v1/ideas` | fiszki pomyslow (nowe na górze) |
-| POST | `/api/v1/ideas` | `{title*, essence?, targetGroup?, stage?, description?}` -> 201 + fiszka |
-| POST | `/api/v1/ideas/assistant` | `{message}` -> `{reply}` (asystent AI; fallback gdy chat wylaczony) |
-| GET | `/api/v1/reports` | lista zgloszen (nowe na gorze) |
-| POST | `/api/v1/admin/innovations` | dodanie innowacji + indeks wektorowy (rola ADMIN) |
-| PATCH | `/api/v1/admin/reports/{id}/status` | `{status}` zgloszenia (rola ADMIN) |
+| GET | `/api/v1/innovations?page=0&size=20&sort=createdAt,desc&region=MALOPOLSKA&areaId=&q=` | Stronicowana lista; `size` 1–100; sortowanie po `createdAt`, `title` lub `status` |
+| GET | `/api/v1/innovations/{id}` | Szczegóły innowacji z `createdAt` |
+| GET | `/api/v1/regions`, `/api/v1/areas`, `/api/v1/resources` | Słowniki i zasoby |
+| POST | `/api/v1/matches` | Publiczne dopasowanie problemu; zwraca `reportId`, status i wyniki |
+| GET | `/api/v1/matches/{reportId}` | Trwały, udostępnialny wynik dopasowania |
+| GET | `/api/v1/ideas` | Publiczna lista zatwierdzonych pomysłów |
+| GET | `/api/v1/ideas?mine=true` | Własne pomysły zalogowanego użytkownika, także oczekujące |
+| GET | `/api/v1/ideas/{id}` | Szczegóły pomysłu; oczekujące widzi właściciel i personel |
+| POST | `/api/v1/ideas` | Publiczne zgłoszenie pomysłu; wynik ma autora i status `PENDING` |
+| POST | `/api/v1/ideas/assistant` | Publiczna porada; żądanie przyjmuje `message`, `history` i `ideaContext` |
+| POST | `/api/v1/register` | Opcjonalne konto mieszkańca |
+| GET | `/api/v1/me`, `/api/v1/csrf` | Stan sesji i token CSRF |
+| GET | `/api/v1/reports` | Lista zgłoszeń dla pracownika i administratora |
+| GET | `/api/v1/admin/ideas?status=PENDING` | Kolejka moderacji |
+| PATCH | `/api/v1/admin/ideas/{id}/moderation` | Zmiana statusu moderacji |
+| POST | `/api/v1/admin/innovations` | Dodanie innowacji |
+| PATCH | `/api/v1/admin/reports/{id}/status` | Zmiana statusu zgłoszenia |
 
-Dokumentacja: **Swagger UI** `http://localhost:8083/swagger-ui.html`,
-maszynowo `http://localhost:8083/v3/api-docs` (JSON, generowany w runtime — zawsze aktualny).
-`openapi.json` w glównym katalogu repo to wyeksportowany snapshot tego specu.
+Wartości `stage`, `status`, `reportStatus`, `kind`, `region` i statusu
+moderacji są enumami w OpenAPI. `history` asystenta jest listą tur `USER` /
+`ASSISTANT` (do 20 wpisów); klient przesyła ją ponownie przy następnym
+pytaniu. Opcjonalny `ideaContext` zawiera dane formularza pomysłu.
 
-Auth demo: `POST /login` (form: `username`, `password`, `_csrf`) -> ciastko `JSESSIONID`;
-w `fetch` uzywaj `credentials: 'include'`. Endpointy `/api/v1/**` sa w demo otwarte
-(bez logowania i CSRF) — do zamkniecia przed wdrozeniem.
+## Dopasowanie
 
-## Architektura matchmakeingu (modul I)
+Zgłoszenie trafia do `problem_report`, a znalezione innowacje i uzasadnienia
+do `report_match`. Wynik można odczytać później pod własnym adresem. Silnik
+łączy wyszukiwanie wektorowe i BM25, a model językowy klasyfikuje problem oraz
+uzasadnia dopasowania. Przy niedostępności modelu działa ścieżka zapasowa.
 
-1. Zgloszenie (`POST /api/v1/matches`) trafia do `problem_report`; LLM przypisuje obszar z Mapy Wyzwan (structured output).
-2. **Hybrydowe wyszukanie**: pgvector cosine (semantyka, Qwen3-Embedding-4B) + **BM25** (`pg_textsearch`,
-   indeks `innovation_bm25_idx`, konfig `hub_pl` — polskie stopwordsy + skladanie diakrytykow
-   `translate()` po obu stronach zapytania) — polaczone **reciprocal-rank fusion** (k=60).
-3. Rerank LLM (Qwen3-4B) zwraca `MatchExplanations` (JSON przez Spring AI `.entity()`)
-   z uzasadnieniem „dlaczego pasuje\" + score RRF znormalizowany do 0-100%.
-4. Fallback: kolejnosc RRF/BM25 — demo nie pada bez modeli.
-
-Uwaga: Qwen3-Embedding-0.6B ma 1024 wymiary — miesci sie w limicie HNSW pgvector (2000),
-wiec indeks `NONE` (dokladne przeszukiwanie; przy bibliotece ~tys. pozycji to ~ms) mozna
-w razie potrzeby zamienic na HNSW.
-
-## Dane
-
-`V4`/`V5` (Flyway): obszary Mapy Wyzwan + **18 prawdziwych pozycji** z Biblioteki Innowacji
-Spolecznych ROPS Krakow (BaWita, Merkury, koMIX zyciowy, Patryk i Kropka, Edki, Puzzle 3D
-Braille, Kody QR...) z **prawdziwymi linkami**: strony katalogowe rops.krakow.pl, filmy
-YouTube, materialy CC-BY + ogolnopolskie linie (116 111, 800 70 2222, Niebieska Linia).
-Kazda karta ma klikalne „Strona innowacji\" i „Zobacz film\".
-
-## Moduly (przez API)
-
-| Endpoint API | Modul |
-|---|---|
-| `POST /api/v1/matches` | I. Matchmaking spoleczny (obligatoryjny) |
-| `GET /api/v1/areas`, `/innovations`, `/resources` | II. Zasobnik wiedzy |
-| `GET/POST /api/v1/ideas`, `/ideas/assistant` | III. Kreator pomyslów (fiszki + asystent AI) |
-| `GET /api/v1/reports`, `POST /api/v1/admin/innovations`, `PATCH /api/v1/admin/reports/{id}/status` | VI. Panel administratora (rola ADMIN) |
-
-## Dostepnosc (WCAG 2.1 AA)
-
-Wymagania przejmuje modul `frontend/`: skip-link, semantyczne landmarki, etykiety przy kazdym
-polu, kontrat ≥ 7:1, widoczny focus, baza 17px dla seniorow, `aria-live` przy czacie asystenta,
-formularze obslugiwane klawiatura.
-
-## Roadmapa (po hackathonie)
-
-- IV. Tester innowacji, V. watki komunikacji, VII. Asystent „Middleman\"
-- generator wnioskow (RAG nad regulaminem naboru), powiadomienia e-mail, integracja z baza grantowa
-
-## Koszty utrzymania
-
-Model lokalny = 0 EUR/zymtanie. VPS z GPU albo CPU 32 GB (oba modele Q4 mieszcza sie w ~15 GB RAM)
-~15-30 EUR/mies. + 0,2 FTE. Alternatywnie tanie API (OpenAI) ~0,01 EUR/zapytanie.
-
-## Znane limity demo
-
-- Rerank LLM na CPU: ~30-50 s/zgloszenie (latwe do skrocenia: max_tokens, mniejszy model, GPU).
-- BM25 bez stemmingu PL (snowball nie ma polskiego): formy slow musza sie zgadzac co do litery
-  po zlozeniu diakrytykow; synonimow (toalety~lazienki) pilnuja wektory.
-- In-memory users (demo); przed wdrozeniem: tabela users + migracja.
+Migracje `V4`–`V6` zawierają obszary, innowacje i zasoby ROPS. Migracja `V9`
+dodaje konta, status moderacji, słowniki, czas utworzenia innowacji i zapisane
+wyniki dopasowań.

@@ -86,6 +86,10 @@ services:
       DB_PASS: ${DB_PASS:-hub}
       LLM_EMBED_BASE_URL: http://embed:8081/v1
       LLM_CHAT_BASE_URL: http://chat:8082/v1
+      HUB_STAFF_EMAIL: ${HUB_STAFF_EMAIL:-}
+      HUB_STAFF_PASSWORD: ${HUB_STAFF_PASSWORD:-}
+      HUB_ADMIN_EMAIL: ${HUB_ADMIN_EMAIL:-}
+      HUB_ADMIN_PASSWORD: ${HUB_ADMIN_PASSWORD:-}
     ports:
       - "8083:8080"
 

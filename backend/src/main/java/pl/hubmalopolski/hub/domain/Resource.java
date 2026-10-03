@@ -15,7 +15,8 @@ public class Resource {
     private String name;
     @Column(nullable = false)
     private String url;
-    private String kind;
+    @Enumerated(EnumType.STRING)
+    private ResourceKind kind;
 
     protected Resource() {
     }
@@ -32,7 +33,7 @@ public class Resource {
         return url;
     }
 
-    public String getKind() {
+    public ResourceKind getKind() {
         return kind;
     }
 }

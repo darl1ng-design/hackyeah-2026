@@ -1,6 +1,7 @@
 package pl.hubmalopolski.hub.domain;
 
 import jakarta.persistence.*;
+import java.time.Instant;
 
 @Entity
 @Table(name = "innovation")
@@ -15,8 +16,12 @@ public class Innovation {
     private String description;
     @Column(name = "target_group")
     private String targetGroup;
-    private String status;          // TESTOWANA | WDROZONA | ROZWOJ
-    private String region;
+    @Enumerated(EnumType.STRING)
+    private InnovationStatus status;
+    @Enumerated(EnumType.STRING)
+    private Region region;
+    @Column(name = "created_at", nullable = false)
+    private Instant createdAt = Instant.now();
     @Column(name = "video_url")
     private String videoUrl;
     @Column(name = "source_url")
@@ -31,7 +36,7 @@ public class Innovation {
     }
 
     public Innovation(String title, String summary, String description,
-                      String targetGroup, String status, String region, String videoUrl) {
+                      String targetGroup, InnovationStatus status, Region region, String videoUrl) {
         this.title = title;
         this.summary = summary;
         this.description = description;
@@ -61,12 +66,16 @@ public class Innovation {
         return targetGroup;
     }
 
-    public String getStatus() {
+    public InnovationStatus getStatus() {
         return status;
     }
 
-    public String getRegion() {
+    public Region getRegion() {
         return region;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
     }
 
     public String getVideoUrl() {

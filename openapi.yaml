@@ -2,17 +2,41 @@ openapi: 3.1.0
 info:
   title: Hub Innowacji Spolecznych API
   description: |-
-    REST API (sciezki /api/v1/**) dla frontendu.
-    Auth: login formularzowy Spring Security (POST /login z username/password/_csrf)
-    ustawia ciastko JSESSIONID — endpointy /api/v1 wysylaja je automatycznie
-    (w fetch: credentials: 'include').
-    UWAGA demo: /api/v1/** nie wymaga logowania i nie wymaga CSRF —
-    do wdrozenia zostac to zmienione (SecurityConfig).
+    REST API dla mieszkańców, pracowników i administratora.
+    Publiczne: katalog, regiony, zatwierdzone pomysły, utworzenie pomysłu,
+    dopasowanie i asystent. Konto mieszkańca jest opcjonalne i daje dostęp
+    do /api/v1/ideas?mine=true. /api/v1/me oraz raporty pracownicze wymagają
+    sesji; /api/v1/admin/** wymaga roli ADMIN.
+    Rejestracja: POST /api/v1/register. Logowanie: POST /login jako formularz
+    username (adres e-mail), password, _csrf; odpowiedź ustawia JSESSIONID.
+    Przed POST/PATCH pobierz GET /api/v1/csrf i wyślij token w nagłówku
+    X-CSRF-TOKEN. Po logowaniu pobierz token ponownie. W fetch użyj
+    credentials: 'include'.
   version: v1
 servers:
-- url: http://localhost:8083
+- url: http://localhost
   description: Generated server url
 paths:
+  /api/v1/register:
+    post:
+      tags:
+      - account-controller
+      operationId: register
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/AccountDto"
+      security:
+      - csrfToken: []
   /api/v1/matches:
     post:
       tags:
@@ -31,11 +55,20 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/MatchResponse"
+      security:
+      - csrfToken: []
   /api/v1/ideas:
     get:
       tags:
       - api-controller
       operationId: listIdeas
+      parameters:
+      - name: mine
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: false
       responses:
         "200":
           description: OK
@@ -62,6 +95,8 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/IdeaDto"
+      security:
+      - csrfToken: []
   /api/v1/ideas/assistant:
     post:
       tags:
@@ -80,11 +115,17 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/AssistantReply"
+      security:
+      - csrfToken: []
   /api/v1/admin/innovations:
     post:
       tags:
       - api-controller
       operationId: addInnovation
+      parameters:
+      - name: X-CSRF-TOKEN
+        in: header
+        required: true
       requestBody:
         content:
           application/json:
@@ -98,6 +139,8 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/InnovationDto"
+      security:
+      - cookieAuth: []
   /api/v1/admin/reports/{id}/status:
     patch:
       tags:
@@ -110,6 +153,9 @@ paths:
         schema:
           type: integer
           format: int64
+      - name: X-CSRF-TOKEN
+        in: header
+        required: true
       requestBody:
         content:
           application/json:
@@ -123,6 +169,38 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/ReportDto"
+      security:
+      - cookieAuth: []
+  /api/v1/admin/ideas/{id}/moderation:
+    patch:
+      tags:
+      - api-controller
+      operationId: moderateIdea
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: X-CSRF-TOKEN
+        in: header
+        required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ModerationRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/IdeaDto"
+      security:
+      - cookieAuth: []
   /api/v1/resources:
     get:
       tags:
@@ -151,6 +229,55 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/ReportDto"
+      security:
+      - cookieAuth: []
+  /api/v1/regions:
+    get:
+      tags:
+      - api-controller
+      operationId: listRegions
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RegionDto"
+  /api/v1/me:
+    get:
+      tags:
+      - api-controller
+      operationId: me
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/MeDto"
+      security:
+      - cookieAuth: []
+  /api/v1/matches/{reportId}:
+    get:
+      tags:
+      - api-controller
+      operationId: getMatch
+      parameters:
+      - name: reportId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/MatchResponse"
   /api/v1/innovations:
     get:
       tags:
@@ -168,15 +295,57 @@ paths:
         required: false
         schema:
           type: string
+      - name: region
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - DOLNOSLASKIE
+          - KUJAWSKO_POMORSKIE
+          - LUBELSKIE
+          - LUBUSKIE
+          - LODZKIE
+          - MALOPOLSKA
+          - MAZOWIECKIE
+          - OPOLSKIE
+          - PODKARPACKIE
+          - PODLASKIE
+          - POMORSKIE
+          - SLASKIE
+          - SWIETOKRZYSKIE
+          - WARMINSKO_MAZURSKIE
+          - WIELKOPOLSKIE
+          - ZACHODNIOPOMORSKIE
+          - POLSKA
+          - INNE
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 0
+      - name: size
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 20
+      - name: sort
+        in: query
+        required: false
+        schema:
+          type: string
+          default: "createdAt,desc"
       responses:
         "200":
           description: OK
           content:
             '*/*':
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/InnovationDto"
+                $ref: "#/components/schemas/PageDtoInnovationDto"
   /api/v1/innovations/{id}:
     get:
       tags:
@@ -196,6 +365,37 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/InnovationDto"
+  /api/v1/ideas/{id}:
+    get:
+      tags:
+      - api-controller
+      operationId: getIdea
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/IdeaDto"
+  /api/v1/csrf:
+    get:
+      tags:
+      - api-controller
+      operationId: csrf
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CsrfDto"
   /api/v1/areas:
     get:
       tags:
@@ -210,8 +410,70 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/AreaDto"
+  /api/v1/admin/ideas:
+    get:
+      tags:
+      - api-controller
+      operationId: listIdeasForModeration
+      parameters:
+      - name: status
+        in: query
+        required: false
+        schema:
+          type: string
+          default: PENDING
+          enum:
+          - PENDING
+          - APPROVED
+          - REJECTED
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/IdeaDto"
+      security:
+      - cookieAuth: []
 components:
   schemas:
+    RegisterRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          minLength: 1
+        password:
+          type: string
+          maxLength: 128
+          minLength: 12
+        displayName:
+          type: string
+          maxLength: 255
+          minLength: 0
+      required:
+      - displayName
+      - email
+      - password
+    AccountDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        email:
+          type: string
+        displayName:
+          type: string
+        role:
+          type: string
+          enum:
+          - MEMBER
+          - STAFF
+          - ADMIN
     MatchRequest:
       type: object
       properties:
@@ -220,6 +482,25 @@ components:
           minLength: 1
         region:
           type: string
+          enum:
+          - DOLNOSLASKIE
+          - KUJAWSKO_POMORSKIE
+          - LUBELSKIE
+          - LUBUSKIE
+          - LODZKIE
+          - MALOPOLSKA
+          - MAZOWIECKIE
+          - OPOLSKIE
+          - PODKARPACKIE
+          - PODLASKIE
+          - POMORSKIE
+          - SLASKIE
+          - SWIETOKRZYSKIE
+          - WARMINSKO_MAZURSKIE
+          - WIELKOPOLSKIE
+          - ZACHODNIOPOMORSKIE
+          - POLSKA
+          - INNE
         authorName:
           type: string
       required:
@@ -250,14 +531,40 @@ components:
           type: string
         status:
           type: string
+          enum:
+          - ROZWOJ
+          - TESTOWANA
+          - WDROZONA
         region:
           type: string
+          enum:
+          - DOLNOSLASKIE
+          - KUJAWSKO_POMORSKIE
+          - LUBELSKIE
+          - LUBUSKIE
+          - LODZKIE
+          - MALOPOLSKA
+          - MAZOWIECKIE
+          - OPOLSKIE
+          - PODKARPACKIE
+          - PODLASKIE
+          - POMORSKIE
+          - SLASKIE
+          - SWIETOKRZYSKIE
+          - WARMINSKO_MAZURSKIE
+          - WIELKOPOLSKIE
+          - ZACHODNIOPOMORSKIE
+          - POLSKA
+          - INNE
         videoUrl:
           type: string
         sourceUrl:
           type: string
         area:
           $ref: "#/components/schemas/AreaDto"
+        createdAt:
+          type: string
+          format: date-time
     MatchItemDto:
       type: object
       properties:
@@ -276,6 +583,11 @@ components:
           format: int64
         reportStatus:
           type: string
+          enum:
+          - NOWE
+          - PRZYPISANE
+          - W_REALIZACJI
+          - ZAMKNIETE
         area:
           $ref: "#/components/schemas/AreaDto"
         matches:
@@ -294,8 +606,17 @@ components:
           type: string
         stage:
           type: string
+          enum:
+          - MYSL
+          - PROTOTYP
+          - TESTY
+          - WDROZENIE
         description:
           type: string
+        author:
+          type: string
+          maxLength: 255
+          minLength: 0
       required:
       - title
     IdeaDto:
@@ -312,8 +633,21 @@ components:
           type: string
         stage:
           type: string
+          enum:
+          - MYSL
+          - PROTOTYP
+          - TESTY
+          - WDROZENIE
         description:
           type: string
+        author:
+          type: string
+        moderationStatus:
+          type: string
+          enum:
+          - PENDING
+          - APPROVED
+          - REJECTED
         createdAt:
           type: string
           format: date-time
@@ -322,9 +656,59 @@ components:
       properties:
         message:
           type: string
-          minLength: 1
+          maxLength: 4000
+          minLength: 0
+        history:
+          type: array
+          items:
+            $ref: "#/components/schemas/Turn"
+          maxItems: 20
+          minItems: 0
+        ideaContext:
+          $ref: "#/components/schemas/IdeaContext"
       required:
       - message
+    IdeaContext:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 255
+          minLength: 0
+        essence:
+          type: string
+          maxLength: 4000
+          minLength: 0
+        targetGroup:
+          type: string
+          maxLength: 255
+          minLength: 0
+        stage:
+          type: string
+          enum:
+          - MYSL
+          - PROTOTYP
+          - TESTY
+          - WDROZENIE
+        description:
+          type: string
+          maxLength: 4000
+          minLength: 0
+    Turn:
+      type: object
+      properties:
+        role:
+          type: string
+          enum:
+          - USER
+          - ASSISTANT
+        content:
+          type: string
+          maxLength: 4000
+          minLength: 0
+      required:
+      - content
+      - role
     AssistantReply:
       type: object
       properties:
@@ -344,8 +728,31 @@ components:
           type: string
         status:
           type: string
+          enum:
+          - ROZWOJ
+          - TESTOWANA
+          - WDROZONA
         region:
           type: string
+          enum:
+          - DOLNOSLASKIE
+          - KUJAWSKO_POMORSKIE
+          - LUBELSKIE
+          - LUBUSKIE
+          - LODZKIE
+          - MALOPOLSKA
+          - MAZOWIECKIE
+          - OPOLSKIE
+          - PODKARPACKIE
+          - PODLASKIE
+          - POMORSKIE
+          - SLASKIE
+          - SWIETOKRZYSKIE
+          - WARMINSKO_MAZURSKIE
+          - WIELKOPOLSKIE
+          - ZACHODNIOPOMORSKIE
+          - POLSKA
+          - INNE
         sourceUrl:
           type: string
         areaId:
@@ -358,7 +765,11 @@ components:
       properties:
         status:
           type: string
-          minLength: 1
+          enum:
+          - NOWE
+          - PRZYPISANE
+          - W_REALIZACJI
+          - ZAMKNIETE
       required:
       - status
     ReportDto:
@@ -371,15 +782,50 @@ components:
           type: string
         region:
           type: string
+          enum:
+          - DOLNOSLASKIE
+          - KUJAWSKO_POMORSKIE
+          - LUBELSKIE
+          - LUBUSKIE
+          - LODZKIE
+          - MALOPOLSKA
+          - MAZOWIECKIE
+          - OPOLSKIE
+          - PODKARPACKIE
+          - PODLASKIE
+          - POMORSKIE
+          - SLASKIE
+          - SWIETOKRZYSKIE
+          - WARMINSKO_MAZURSKIE
+          - WIELKOPOLSKIE
+          - ZACHODNIOPOMORSKIE
+          - POLSKA
+          - INNE
         authorName:
           type: string
         status:
           type: string
+          enum:
+          - NOWE
+          - PRZYPISANE
+          - W_REALIZACJI
+          - ZAMKNIETE
         area:
           $ref: "#/components/schemas/AreaDto"
         createdAt:
           type: string
           format: date-time
+    ModerationRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+          - PENDING
+          - APPROVED
+          - REJECTED
+      required:
+      - status
     ResourceDto:
       type: object
       properties:
@@ -392,8 +838,82 @@ components:
           type: string
         kind:
           type: string
+          enum:
+          - BIBLIOTEKA
+          - RAPORTY
+          - STATYSTYKI
+          - MAPA
+          - PUBLIKACJE
+          - CANVAS
+    RegionDto:
+      type: object
+      properties:
+        code:
+          type: string
+          enum:
+          - DOLNOSLASKIE
+          - KUJAWSKO_POMORSKIE
+          - LUBELSKIE
+          - LUBUSKIE
+          - LODZKIE
+          - MALOPOLSKA
+          - MAZOWIECKIE
+          - OPOLSKIE
+          - PODKARPACKIE
+          - PODLASKIE
+          - POMORSKIE
+          - SLASKIE
+          - SWIETOKRZYSKIE
+          - WARMINSKO_MAZURSKIE
+          - WIELKOPOLSKIE
+          - ZACHODNIOPOMORSKIE
+          - POLSKA
+          - INNE
+        label:
+          type: string
+    MeDto:
+      type: object
+      properties:
+        username:
+          type: string
+        roles:
+          type: array
+          items:
+            type: string
+    PageDtoInnovationDto:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: "#/components/schemas/InnovationDto"
+        page:
+          type: integer
+          format: int32
+        size:
+          type: integer
+          format: int32
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+          format: int32
+    CsrfDto:
+      type: object
+      properties:
+        token:
+          type: string
+        headerName:
+          type: string
+        parameterName:
+          type: string
   securitySchemes:
     cookieAuth:
       type: apiKey
       name: JSESSIONID
       in: cookie
+    csrfToken:
+      type: apiKey
+      name: X-CSRF-TOKEN
+      in: header

@@ -11,21 +11,23 @@ public class ProblemReport {
     private Long id;
     @Column(nullable = false, columnDefinition = "text")
     private String description;
-    private String region;
+    @Enumerated(EnumType.STRING)
+    private Region region;
     @Column(name = "author_name")
     private String authorName;
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "area_id")
     private ChallengeArea area;               // nadany przez AI lub admina
     @Column(nullable = false)
-    private String status = "NOWE";           // NOWE | PRZYPISANE | W_REALIZACJI | ZAMKNIETE
+    @Enumerated(EnumType.STRING)
+    private ReportStatus status = ReportStatus.NOWE;
     @Column(name = "created_at", nullable = false)
     private final Instant createdAt = Instant.now();
 
     protected ProblemReport() {
     }
 
-    public ProblemReport(String description, String region, String authorName) {
+    public ProblemReport(String description, Region region, String authorName) {
         this.description = description;
         this.region = region;
         this.authorName = authorName;
@@ -39,7 +41,7 @@ public class ProblemReport {
         return description;
     }
 
-    public String getRegion() {
+    public Region getRegion() {
         return region;
     }
 
@@ -55,11 +57,11 @@ public class ProblemReport {
         this.area = area;
     }
 
-    public String getStatus() {
+    public ReportStatus getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(ReportStatus status) {
         this.status = status;
     }
 

@@ -2,12 +2,13 @@ package pl.hubmalopolski.hub.repo;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import pl.hubmalopolski.hub.domain.Innovation;
 
 import java.util.List;
 
-public interface InnovationRepository extends JpaRepository<Innovation, Long> {
+public interface InnovationRepository extends JpaRepository<Innovation, Long>, JpaSpecificationExecutor<Innovation> {
 
     /**
      * Dopasowanie slow kluczowych (LIKE) — uzupelnia wyszukiwanie wektorowe (hybrid).

@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import pl.hubmalopolski.hub.domain.Innovation;
 import pl.hubmalopolski.hub.repo.InnovationRepository;
@@ -52,7 +53,7 @@ public class MatchmakingService {
                 "Tytul: " + in.getTitle(),
                 "Opis: " + nullSafe(in.getSummary()) + " " + nullSafe(in.getDescription()),
                 "Grupa docelowa: " + nullSafe(in.getTargetGroup()),
-                "Region: " + nullSafe(in.getRegion()),
+                "Region: " + (in.getRegion() == null ? "" : in.getRegion().getLabel()),
                 "Obszar: " + (in.getArea() != null ? in.getArea().getName() : ""));
         Document doc = Document.builder()
                 .text(text)
@@ -97,6 +98,8 @@ public class MatchmakingService {
         rank = 0;
         for (Long id : bm25Ranked) scores.merge(id, 1.0 / (60 + ++rank), Double::sum);
 
+        if (scores.isEmpty()) return matchKeywords(problemText);
+
         // tylko top-5 fuzji trafia do reranku LLM — kazdy kandydat to ~50 tokenow
         // promptu i ~30 dekodowania; na CPU (4 vCPU, ~12 tok/s) liczy sie kazda linijka.
         List<Long> fusedIds = scores.entrySet().stream()
@@ -108,6 +111,41 @@ public class MatchmakingService {
                 .filter(Optional::isPresent).map(Optional::get)
                 .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
         return finish(problemText, candidates, byVector, byBm25);
+    }
+
+    private List<MatchResult> matchKeywords(String problemText) {
+        List<String> terms = Arrays.stream(problemText.toLowerCase(Locale.ROOT)
+                        .split("[^\\p{L}\\p{N}]+"))
+                .filter(term -> term.length() >= 4)
+                .distinct().limit(8).toList();
+        if (terms.isEmpty()) return List.of();
+
+        Map<Long, Innovation> found = new HashMap<>();
+        Map<Long, Set<String>> matchingTerms = new HashMap<>();
+        for (String term : terms) {
+            try {
+                for (Innovation innovation : innovations.searchKeyword(term, PageRequest.of(0, 20))) {
+                    if (innovation.getId() == null) continue;
+                    found.put(innovation.getId(), innovation);
+                    matchingTerms.computeIfAbsent(innovation.getId(), id -> new LinkedHashSet<>()).add(term);
+                }
+            } catch (Exception e) {
+                log.warn("Wyszukiwanie slow kluczowych niedostepne: {}", e.getMessage());
+                return List.of();
+            }
+        }
+        return found.values().stream()
+                .sorted(Comparator.<Innovation>comparingInt(
+                        innovation -> matchingTerms.get(innovation.getId()).size()).reversed()
+                        .thenComparing(Innovation::getId))
+                .limit(5)
+                .map(innovation -> {
+                    Set<String> hits = matchingTerms.get(innovation.getId());
+                    return new MatchResult(innovation,
+                            "Pasujące słowa z opisu problemu: " + String.join(", ", hits) + ".",
+                            (double) hits.size() / terms.size());
+                })
+                .toList();
     }
 
     private List<MatchResult> finish(String problemText, List<Innovation> candidates,
@@ -148,8 +186,12 @@ public class MatchmakingService {
                 List<MatchResult> results = new ArrayList<>();
                 for (MatchExplanations.MatchExplanation m : out.matches()) {
                     Innovation in = byId.get(m.innovationId());
-                    if (in != null) results.add(new MatchResult(in, m.why(),
-                            displayScore.apply(in.getId())));
+                    if (in != null) {
+                        String why = m.why() == null || m.why().isBlank()
+                                ? "Podobny problem lub odbiorca — dopasowanie hybrydowe (wektor + BM25)."
+                                : m.why().trim();
+                        results.add(new MatchResult(in, why, displayScore.apply(in.getId())));
+                    }
                 }
                 // LLM decyduje KTORE trafiaja na liste (i daje why); wyswietlane % to
                 // similarity — wiec sortujemy po niej, inaczej top wyniku moze byc

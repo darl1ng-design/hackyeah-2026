@@ -20,14 +20,22 @@ public class OpenApiConfig {
                         .title("Hub Innowacji Spolecznych API")
                         .version("v1")
                         .description("""
-                                REST API (sciezki /api/v1/**) dla frontendu.
-                                Auth: login formularzowy Spring Security (POST /login z username/password/_csrf)
-                                ustawia ciastko JSESSIONID — endpointy /api/v1 wysylaja je automatycznie
-                                (w fetch: credentials: 'include').
-                                UWAGA demo: /api/v1/** nie wymaga logowania i nie wymaga CSRF —
-                                do wdrozenia zostac to zmienione (SecurityConfig)."""))
-                .components(new Components().addSecuritySchemes("cookieAuth",
-                        new SecurityScheme().type(SecurityScheme.Type.APIKEY)
-                                .in(SecurityScheme.In.COOKIE).name("JSESSIONID")));
+                                REST API dla mieszkańców, pracowników i administratora.
+                                Publiczne: katalog, regiony, zatwierdzone pomysły, utworzenie pomysłu,
+                                dopasowanie i asystent. Konto mieszkańca jest opcjonalne i daje dostęp
+                                do /api/v1/ideas?mine=true. /api/v1/me oraz raporty pracownicze wymagają
+                                sesji; /api/v1/admin/** wymaga roli ADMIN.
+                                Rejestracja: POST /api/v1/register. Logowanie: POST /login jako formularz
+                                username (adres e-mail), password, _csrf; odpowiedź ustawia JSESSIONID.
+                                Przed POST/PATCH pobierz GET /api/v1/csrf i wyślij token w nagłówku
+                                X-CSRF-TOKEN. Po logowaniu pobierz token ponownie. W fetch użyj
+                                credentials: 'include'."""))
+                .components(new Components()
+                        .addSecuritySchemes("cookieAuth", new SecurityScheme()
+                                .type(SecurityScheme.Type.APIKEY)
+                                .in(SecurityScheme.In.COOKIE).name("JSESSIONID"))
+                        .addSecuritySchemes("csrfToken", new SecurityScheme()
+                                .type(SecurityScheme.Type.APIKEY)
+                                .in(SecurityScheme.In.HEADER).name("X-CSRF-TOKEN")));
     }
 }
