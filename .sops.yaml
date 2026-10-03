@@ -1,5 +1,0 @@
-# secrets.env = source of truth, committed encrypted. .env = gitignored runtime copy.
-# Same age key as other projects (~/.config/sops/age/keys.txt). Use scripts/secrets.sh.
-creation_rules:
-  - path_regex: (^|/)secrets\.env$
-    age: age1umrllqac6f5t9uehkcmf03htaxdcgzl240gyhzjv60eykkkkputq505mq2
