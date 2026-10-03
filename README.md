@@ -27,8 +27,8 @@ Bez modeli aplikacja starta i dziala — matchmaking fallbackuje do samej kolejn
 
 1. Zgloszenie (`POST /match`) trafia do `problem_report`; LLM przypisuje obszar z Mapy Wyzwan (structured output).
 2. **Hybrydowe wyszukanie**: pgvector cosine (semantyka, Qwen3-Embedding-4B) + **BM25** (`pg_textsearch`,
-   indeks `innovation_bm25_idx`, konfig `simple` — brak wbudowanego stemmera PL) — polaczone
-   **reciprocal-rank fusion** (k=60).
+   indeks `innovation_bm25_idx`, konfig `hub_pl` — polskie stopwordsy + skladanie diakrytykow
+   `translate()` po obu stronach zapytania) — polaczone **reciprocal-rank fusion** (k=60).
 3. Rerank LLM (Qwen3-4B) zwraca `MatchExplanations` (JSON przez Spring AI `.entity()`)
    z uzasadnieniem „dlaczego pasuje\" + score RRF znormalizowany do 0-100%.
 4. Fallback: kolejnosc RRF/BM25 — demo nie pada bez modeli.
@@ -73,6 +73,6 @@ Model lokalny = 0 EUR/zymtanie. VPS z GPU albo CPU 32 GB (oba modele Q4 mieszcza
 ## Znane limity demo
 
 - Rerank LLM na CPU: ~30-50 s/zgloszenie (latwe do skrocenia: max_tokens, mniejszy model, GPU).
-- BM25 z `text_config=simple`: brak stemmingu PL — sensowne formy slow musza sie zgadzac;
-  wektory to uzupelniaja.
+- BM25 bez stemmingu PL (snowball nie ma polskiego): formy slow musza sie zgadzac co do litery
+  po zlozeniu diakrytykow; synonimow (toalety~lazienki) pilnuja wektory.
 - In-memory users (demo); przed wdrozeniem: tabela users + migracja.
