@@ -17,13 +17,14 @@ Matchmaking spoleczny (modul I, obligatoryjny) + Zasobnik wiedzy (II) + Kreator 
 ## Uruchomienie
 
 ```bash
-# 1. modele (jednorazowo, ~3 GB GGUF na dysku)
-MODELS_DIR=${MODELS_DIR:-$HOME/models} sh ~/models/fetch_models.sh
-# 2. wszystko: db (pg18+pgvector+bm25) + embed (0.6B) + chat (4B) + aplikacja
+# 1. modele (~3 GB GGUF; automatyczne przy pierwszym `docker compose up`,
+#    albo recznie ponizej — skrypt pomija istniejace pliki, wznawia przerwane)
+sh scripts/fetch_models.sh
+# 2. wszystko: modele + db (pg18+pgvector+bm25) + embed (0.6B) + chat (4B) + aplikacja
 docker compose up -d --build           # http://localhost:8083
 ```
 
-Katalog modeli to `~/models` (nadpisz przez `MODELS_DIR`). `docker compose down`
+Katalog modeli to `./models` obok `docker-compose.yml` (nadpisz przez `MODELS_DIR`). `docker compose down`
 zostawia dane w wolumenie `hub-pgdata`; `down -v` czyści bazę do zera.
 
 Konta demonstracyjne: `admin/admin123` (rola ADMIN dla `/api/v1/admin/**`), `user/user123`.

@@ -1,6 +1,6 @@
 #!/bin/sh
 # Full-stack bring-up: db + embed + chat + app (Spring Boot in Docker).
-cd /home/jbr/hub-app || exit 1
+cd "$(dirname "$0")/.." || exit 1
 # free host ports held by the old bare-metal app (mvnw spring-boot:run)
 for p in $(pgrep -f "spring-boot:run"); do kill "$p" 2>/dev/null; done
 for p in $(pgrep -f HubAppApplication); do kill "$p" 2>/dev/null; done

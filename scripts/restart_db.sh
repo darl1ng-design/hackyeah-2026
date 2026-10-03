@@ -1,5 +1,5 @@
 #!/bin/sh
-cd /home/jbr/hub-app || exit 1
+cd "$(dirname "$0")/.." || exit 1
 docker compose down -v 2>&1 | tail -1
 docker compose up -d 2>&1 | tail -1
 sleep 8

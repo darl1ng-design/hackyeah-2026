@@ -1,4 +1,17 @@
 services:
+  # One-shot init: downloads the GGUF models into ./models (or $MODELS_DIR)
+  # before embed/chat start. Idempotent + resumable, see scripts/fetch_models.sh.
+  models:
+    image: curlimages/curl:8.10.1
+    environment:
+      MODELS_DIR: /models
+    command: ["sh", "-c", "cat /fetch/fetch_models.sh | sh"]
+    volumes:
+      - ${MODELS_DIR:-./models}:/models
+      - ./scripts:/fetch:ro
+    user: root   # Docker creates a missing bind dir root-owned; uid 1000 can't write it
+    restart: on-failure
+
   db:
     build:
       context: docker
@@ -21,12 +34,15 @@ services:
 
   embed:
     image: ghcr.io/ggml-org/llama.cpp:server
+    depends_on:
+      models:
+        condition: service_completed_successfully
     # Qwen3-Embedding-0.6B Q8: 1024d, realtime on CPU (4B was too slow for demo).
     command: >
       -m /models/Qwen3-Embedding-0.6B-Q8_0.gguf
       --embedding --host 0.0.0.0 --port 8081 --ctx-size 4096 --parallel 4
     volumes:
-      - ${MODELS_DIR:-${HOME}/models}:/models:ro
+      - ${MODELS_DIR:-./models}:/models:ro
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8081/health"]
       interval: 5s
@@ -36,12 +52,15 @@ services:
 
   chat:
     image: ghcr.io/ggml-org/llama.cpp:server
+    depends_on:
+      models:
+        condition: service_completed_successfully
     # Qwen3-4B-Instruct: obszary + rerank/uzasadnienia. Bez niego app fallbackuje.
     command: >
       -m /models/Qwen3-4B-Instruct-Q4_K_M.gguf
       --host 0.0.0.0 --port 8082 --ctx-size 8192
     volumes:
-      - ${MODELS_DIR:-${HOME}/models}:/models:ro
+      - ${MODELS_DIR:-./models}:/models:ro
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8082/health"]
       interval: 5s
