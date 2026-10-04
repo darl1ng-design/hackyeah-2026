@@ -10,6 +10,8 @@ import { go } from "../../lib/router";
 import type { ScreenProps } from "../../screens";
 import { useSession } from "../../session";
 import s from "./Panel.module.css";
+import { Dictation } from "../dictation/Dictation";
+import { useInsertDictated } from "../dictation/useInsertDictated";
 
 type InnForm = {
   title: string;
@@ -75,6 +77,9 @@ function EditorForm({ isInn, id, initial }: { isInn: boolean; id: number | null;
     },
   });
 
+  const setField = (k: string) => (v: string) => setForm((f) => ({ ...f, [k]: v }));
+  const dictate = useInsertDictated();
+
   const save = async () => {
     setSaving(true);
     setErr({});
@@ -134,7 +139,9 @@ function EditorForm({ isInn, id, initial }: { isInn: boolean; id: number | null;
               maxLength={1000}
               {...bind("summary")}
             />
+            <Dictation label="Zajawka" onText={dictate(() => str("summary"), setField("summary"), true)} />
             <Textarea id="ed-desc" label="Pełny opis" optional rows={8} {...bind("description")} />
+            <Dictation label="Pełny opis" onText={dictate(() => str("description"), setField("description"), true)} />
             <TextField id="ed-target" label="Grupa docelowa" optional {...bind("targetGroup")} />
             <div className={s.grid3}>
               <Select id="ed-status" label="Status" options={options(LABELS.innovationStatus)} {...bind("status")} />

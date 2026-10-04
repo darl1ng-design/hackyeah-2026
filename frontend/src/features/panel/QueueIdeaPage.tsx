@@ -10,6 +10,8 @@ import { LABELS, MOD_TONE } from "../../lib/labels";
 import type { ScreenProps } from "../../screens";
 import { useSession } from "../../session";
 import s from "./Panel.module.css";
+import { Dictation } from "../dictation/Dictation";
+import { useInsertDictated } from "../dictation/useInsertDictated";
 
 const MOD_TEXT: Record<Moderation, string> = {
   PENDING: "Pomysł czeka na decyzję. Po zatwierdzeniu będzie widoczny w banku pomysłów.",
@@ -31,6 +33,7 @@ export function QueueIdeaPage({ route }: ScreenProps) {
     [id],
   );
   const [reply, setReply] = useState("");
+  const dictate = useInsertDictated();
   const [replyErr, setReplyErr] = useState("");
   const [sending, setSending] = useState(false);
   const [modSaving, setModSaving] = useState(false);
@@ -139,6 +142,12 @@ export function QueueIdeaPage({ route }: ScreenProps) {
                 }}
                 error={replyErr || undefined}
               />
+              <div className={s.micTop}>
+                <Dictation
+                  label="Twoja odpowiedź"
+                  onText={dictate(() => reply, (v) => { setReply(v); setReplyErr(""); }, true)}
+                />
+              </div>
               <div>
                 <Button type="submit" iconLeft="send" disabled={sending}>
                   {sending ? "Wysyłamy…" : "Wyślij odpowiedź"}
