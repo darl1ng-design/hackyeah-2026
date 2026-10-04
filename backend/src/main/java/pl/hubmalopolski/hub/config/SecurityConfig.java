@@ -30,7 +30,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/csrf", "/api/v1/innovations/**",
                                 "/api/v1/areas", "/api/v1/resources", "/api/v1/regions",
                                 "/api/v1/matches/*", "/api/v1/ideas", "/api/v1/ideas/*",
-                                "/api/v1/transcribe/health").permitAll()
+                                "/api/v1/transcribe/health", "/api/v1/grant-calls").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/matches",
                                 "/api/v1/ideas/assistant", "/api/v1/ideas/assistant/parse", "/api/v1/register",
                                 "/api/v1/transcribe").permitAll()

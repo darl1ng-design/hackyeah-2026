@@ -31,6 +31,19 @@ class MigrationV10V11Tests {
                     new ClassPathResource("db/migration/V10__knowledge_publication.sql"));
             ScriptUtils.executeSqlScript(connection,
                     new ClassPathResource("db/migration/V11__idea_communication.sql"));
+            // H2 assigns a generated name to the inline check; PostgreSQL names it user_notification_kind_check.
+            // Remove the H2-generated constraint so V12 can exercise its expanded check constraint.
+            try (var statement = connection.createStatement();
+                 var checks = statement.executeQuery("select constraint_name from information_schema.table_constraints "
+                         + "where table_name = 'USER_NOTIFICATION' and constraint_type = 'CHECK'")) {
+                var names = new java.util.ArrayList<String>();
+                while (checks.next()) names.add(checks.getString(1));
+                for (String name : names) statement.execute("alter table user_notification drop constraint \"" + name + "\"");
+            }
+            ScriptUtils.executeSqlScript(connection,
+                    new ClassPathResource("db/migration/V12__generic_notifications.sql"));
+            ScriptUtils.executeSqlScript(connection,
+                    new ClassPathResource("db/migration/V13__hub_workflows.sql"));
 
             try (var statement = connection.createStatement()) {
                 var innovation = statement.executeQuery("select published from innovation");
@@ -46,14 +59,26 @@ class MigrationV10V11Tests {
                         + "values ('staff@example.org', 'hash', 'Pracownik', 'STAFF')");
                 statement.execute("insert into idea_reply (idea_id, author_user_id, body) "
                         + "values (1, 2, 'Odpowiedź')");
-                statement.execute("insert into user_notification (recipient_user_id, idea_id, kind, title) "
-                        + "values (1, 1, 'IDEA_REPLY', 'Nowa odpowiedź')");
+                statement.execute("insert into user_notification (recipient_user_id, idea_id, kind, target_type, target_id, title) "
+                        + "values (1, 1, 'IDEA_REPLY', 'IDEA', 1, 'Nowa odpowiedź')");
+                statement.execute("insert into user_notification (recipient_user_id, kind, target_type, target_id, title) "
+                        + "values (2, 'NEW_GRANT_APPLICATION', 'GRANT_APPLICATION', 1, 'Nowy wniosek')");
+                statement.execute("insert into hub_workflow_record (module, owner_user_id, reference_id, status, title, payload) "
+                        + "values ('GRANT_CALL', 2, null, 'OPEN', 'Nabór', '{}')");
+                statement.execute("insert into hub_workflow_record (module, owner_user_id, reference_id, status, title, payload) "
+                        + "values ('MENTOR_CONVERSATION', 1, null, 'OPEN', 'Rozmowa', '{}')");
                 var replies = statement.executeQuery("select count(*) from idea_reply");
                 replies.next();
                 assertEquals(1, replies.getInt(1));
                 var notifications = statement.executeQuery("select count(*) from user_notification");
                 notifications.next();
-                assertEquals(1, notifications.getInt(1));
+                assertEquals(2, notifications.getInt(1));
+                var generic = statement.executeQuery("select count(*) from user_notification where idea_id is null and target_type = 'GRANT_APPLICATION'");
+                generic.next();
+                assertEquals(1, generic.getInt(1));
+                var workflows = statement.executeQuery("select count(*) from hub_workflow_record");
+                workflows.next();
+                assertEquals(2, workflows.getInt(1));
             }
         }
     }

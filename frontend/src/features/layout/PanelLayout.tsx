@@ -13,6 +13,11 @@ const SECTION: Partial<Record<Route["name"], string>> = {
   wiedza: "wiedza",
   edytor: "wiedza",
   trendy: "trendy",
+  testerQueue: "testerzy",
+  grantQueue: "wnioski",
+  mentorQueue: "mentorzy",
+  middlemanQueue: "adaptacje",
+  grantAdmin: "nabory",
 };
 
 export function PanelLayout({
@@ -43,8 +48,18 @@ export function PanelLayout({
       href: "/panel/pomysly",
       count: pending,
     },
+    { k: "testerzy", label: "Testerzy", icon: "flask-conical", href: "/panel/testerzy" },
+    { k: "wnioski", label: "Wnioski grantowe", icon: "file-text", href: "/panel/wnioski" },
+    { k: "mentorzy", label: "Rozmowy", icon: "message-circle", href: "/panel/mentorzy" },
+    { k: "adaptacje", label: "Middleman", icon: "workflow", href: "/panel/adaptacje" },
     ...(role === "ADMIN"
       ? [
+          {
+            k: "nabory",
+            label: "Nabory",
+            icon: "file-plus-2",
+            href: "/panel/nabory",
+          },
           {
             k: "wiedza",
             label: "Baza wiedzy",

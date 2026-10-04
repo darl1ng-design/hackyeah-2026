@@ -182,4 +182,39 @@ export const api = {
       : request<T.Resource>("POST", "/api/v1/admin/resources", b),
   trends: (q: { from?: string; to?: string }) =>
     get<T.Trends>("/api/v1/admin/trends", q),
+
+  testerSubmit: (id: number, body: T.TesterFeedbackRequest) =>
+    request<T.WorkflowRecord>("POST", `/api/v1/innovations/${id}/tester-feedback`, body),
+  testerMine: (id: number) => get<T.WorkflowRecord>(`/api/v1/innovations/${id}/tester-feedback/mine`),
+  testerQueue: () => get<T.WorkflowRecord[]>("/api/v1/staff/tester-feedback"),
+
+  grantCalls: () => get<T.GrantCall[]>("/api/v1/grant-calls"),
+  adminGrantCalls: () => get<T.GrantCall[]>("/api/v1/admin/grant-calls"),
+  saveGrantCall: (id: number | null, body: T.GrantCallRequest) =>
+    id
+      ? request<T.GrantCall>("PUT", `/api/v1/admin/grant-calls/${id}`, body)
+      : request<T.GrantCall>("POST", "/api/v1/admin/grant-calls", body),
+  submitGrantApplication: (id: number, answers: Record<string, string>) =>
+    request<T.GrantApplication>("POST", `/api/v1/grant-calls/${id}/applications`, { answers }),
+  myGrantApplications: () => get<T.GrantApplication[]>("/api/v1/grant-applications", { mine: true }),
+  staffGrantApplications: () => get<T.GrantApplication[]>("/api/v1/staff/grant-applications"),
+  grantApplicationStatus: (id: number, status: T.GrantApplicationStatus) =>
+    request<T.GrantApplication>("PATCH", `/api/v1/staff/grant-applications/${id}/status`, { status }),
+
+  openMentorConversation: (subject: string, body: string) =>
+    request<T.MentorConversation>("POST", "/api/v1/mentor/conversations", { subject, body }),
+  myMentorConversations: () => get<T.MentorConversation[]>("/api/v1/mentor/conversations"),
+  mentorConversation: (id: number) => get<T.MentorConversation>(`/api/v1/mentor/conversations/${id}`),
+  sendMentorMessage: (id: number, body: string) =>
+    request<T.MentorConversation>("POST", `/api/v1/mentor/conversations/${id}/messages`, { body }),
+  staffMentorConversations: () => get<T.MentorConversation[]>("/api/v1/staff/mentor/conversations"),
+  staffMentorConversation: (id: number) => get<T.MentorConversation>(`/api/v1/staff/mentor/conversations/${id}`),
+  replyMentorConversation: (id: number, body: string) =>
+    request<T.MentorConversation>("POST", `/api/v1/staff/mentor/conversations/${id}/messages`, { body }),
+
+  generateMiddlemanPlan: (body: { innovationId: number; institution: string; targetGroup: string; need: string; constraints?: string }) =>
+    request<T.MiddlemanPlan>("POST", "/api/v1/middleman/plans", body),
+  myMiddlemanPlans: () => get<T.MiddlemanPlan[]>("/api/v1/middleman/plans"),
+  middlemanPlan: (id: number) => get<T.MiddlemanPlan>(`/api/v1/middleman/plans/${id}`),
+  staffMiddlemanPlans: () => get<T.MiddlemanPlan[]>("/api/v1/staff/middleman/plans"),
 };

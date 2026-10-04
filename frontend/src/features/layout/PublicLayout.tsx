@@ -10,6 +10,7 @@ const NAV = [
   ["dopasuj", "Dopasuj", "/dopasuj"],
   ["pomysly", "Pomysły", "/pomysly"],
   ["zasoby", "Zasoby", "/zasoby"],
+  ["nabory", "Nabory", "/nabory"],
 ] as const;
 const SECTION: Partial<Record<Route["name"], string>> = {
   katalog: "katalog",
@@ -20,6 +21,11 @@ const SECTION: Partial<Record<Route["name"], string>> = {
   pomysl: "pomysly",
   nowy: "pomysly",
   zasoby: "zasoby",
+  nabory: "nabory",
+  nabor: "nabory",
+  mentorzy: "mentorzy",
+  mentor: "mentorzy",
+  adaptuj: "adaptuj",
 };
 
 export function PublicLayout({
@@ -166,6 +172,9 @@ export function PublicLayout({
             <a href="#/dopasuj">Dopasuj rozwiązania</a>
             <a href="#/pomysly">Pomysły</a>
             <a href="#/zasoby">Zasoby</a>
+            <a href="#/nabory">Otwarte nabory</a>
+            <a href="#/mentorzy">Porozmawiaj z ekspertem</a>
+            <a href="#/adaptuj">Adaptuj innowację do usługi</a>
           </div>
         </div>
         <div className={s.copy}>© 2026 Kompas Małopolski</div>

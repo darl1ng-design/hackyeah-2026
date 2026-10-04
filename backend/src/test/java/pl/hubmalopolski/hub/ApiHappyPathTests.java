@@ -2,6 +2,7 @@ package pl.hubmalopolski.hub;
 
 import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.Test;
+import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +15,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import java.time.Instant;
 import pl.hubmalopolski.hub.ai.IdeaAssistant;
 import pl.hubmalopolski.hub.ai.ProblemClassifier;
 import pl.hubmalopolski.hub.domain.AppUser;
@@ -29,6 +31,7 @@ import pl.hubmalopolski.hub.repo.InnovationRepository;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -57,6 +60,7 @@ class ApiHappyPathTests {
     @Autowired JdbcTemplate jdbc;
     @MockitoBean VectorStore vectorStore;
     @MockitoBean ChatModel chatModel;
+    @MockitoBean ChatClient chatClient;
     @MockitoBean ProblemClassifier classifier;
     @MockitoBean IdeaAssistant assistant;
     @MockitoBean pl.hubmalopolski.hub.ai.IdeaStoryParser storyParser;
@@ -317,6 +321,119 @@ class ApiHappyPathTests {
                 .andExpect(jsonPath("$[0].body").value("Zapraszamy na konsultację."));
         mvc.perform(get("/api/v1/ideas/{id}/replies", ideaId).session(stranger))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void memberStaffAndAdminCompleteNewHubWorkflows() throws Exception {
+        MockHttpSession member = login("workflow-member@example.org", AppUserRole.MEMBER);
+        MockHttpSession staff = login("workflow-staff@example.org", AppUserRole.STAFF);
+        MockHttpSession admin = login("workflow-admin@example.org", AppUserRole.ADMIN);
+        Innovation innovation = innovations.save(new Innovation("Telefon sąsiedzki",
+                "Wsparcie samotnych seniorów", "Opis rozwiązania", "Seniorzy",
+                InnovationStatus.WDROZONA, Region.MALOPOLSKA, null));
+
+        Instant opensAt = Instant.now().minusSeconds(60);
+        Instant closesAt = Instant.now().plusSeconds(86400);
+        SessionCsrf adminCsrf = csrf(admin);
+        MvcResult callResult = mvc.perform(post("/api/v1/admin/grant-calls").session(adminCsrf.session())
+                        .header("X-CSRF-TOKEN", adminCsrf.token()).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\":\"Nabór syntetyczny\",\"description\":\"Test\","
+                                + "\"opensAt\":\"" + opensAt + "\",\"closesAt\":\"" + closesAt + "\","
+                                + "\"status\":\"OPEN\",\"fields\":[{\"key\":\"need\","
+                                + "\"label\":\"Opisz potrzebę\",\"type\":\"TEXTAREA\",\"required\":true}] }"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.status").value("OPEN"))
+                .andReturn();
+        long callId = ((Number) JsonPath.read(callResult.getResponse().getContentAsString(), "$.id")).longValue();
+
+        SessionCsrf memberCsrf = csrf(member);
+        MvcResult applicationResult = mvc.perform(post("/api/v1/grant-calls/{id}/applications", callId)
+                        .session(memberCsrf.session()).header("X-CSRF-TOKEN", memberCsrf.token())
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"answers\":{\"need\":\"Wsparcie seniorów\"}}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.payload.formSnapshot.fields[0].key").value("need"))
+                .andReturn();
+        long applicationId = ((Number) JsonPath.read(applicationResult.getResponse().getContentAsString(), "$.id"))
+                .longValue();
+        mvc.perform(get("/api/v1/grant-applications?mine=true").session(member))
+                .andExpect(jsonPath("$[?(@.id == " + applicationId + ")].status").value("SUBMITTED"));
+        mvc.perform(get("/api/v1/staff/grant-applications").session(staff))
+                .andExpect(jsonPath("$[?(@.id == " + applicationId + ")].author").value("MEMBER"));
+        SessionCsrf staffCsrf = csrf(staff);
+        mvc.perform(patch("/api/v1/staff/grant-applications/{id}/status", applicationId)
+                        .session(staffCsrf.session()).header("X-CSRF-TOKEN", staffCsrf.token())
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"status\":\"UNDER_REVIEW\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("UNDER_REVIEW"));
+
+        MvcResult conversationResult = mvc.perform(post("/api/v1/mentor/conversations")
+                        .session(memberCsrf.session()).header("X-CSRF-TOKEN", memberCsrf.token())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"subject\":\"Konsultacja\",\"body\":\"Proszę o wskazówki.\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.messages[0].body").value("Proszę o wskazówki."))
+                .andReturn();
+        long conversationId = ((Number) JsonPath.read(conversationResult.getResponse().getContentAsString(), "$.id"))
+                .longValue();
+        mvc.perform(get("/api/v1/staff/mentor/conversations").session(staff))
+                .andExpect(jsonPath("$[?(@.id == " + conversationId + ")].subject").value("Konsultacja"));
+        mvc.perform(post("/api/v1/staff/mentor/conversations/{id}/messages", conversationId)
+                        .session(staffCsrf.session()).header("X-CSRF-TOKEN", staffCsrf.token())
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"body\":\"Umówmy konsultację.\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.messages[1].body").value("Umówmy konsultację."));
+        mvc.perform(get("/api/v1/mentor/conversations/{id}", conversationId).session(member))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.messages.length()").value(2));
+
+        mvc.perform(post("/api/v1/innovations/{id}/tester-feedback", innovation.getId())
+                        .session(memberCsrf.session()).header("X-CSRF-TOKEN", memberCsrf.token())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"interested\":true,\"rating\":5,\"feedback\":\"Jasny opis\","
+                                + "\"suggestion\":\"Dodać wersję audio\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.payload.rating").value(5));
+        mvc.perform(get("/api/v1/innovations/{id}/tester-feedback/mine", innovation.getId()).session(member))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.payload.suggestion").value("Dodać wersję audio"));
+        mvc.perform(get("/api/v1/staff/tester-feedback").session(staff))
+                .andExpect(jsonPath("$[?(@.referenceId == " + innovation.getId() + ")].status").value("SUBMITTED"));
+
+        ChatClient.ChatClientRequestSpec prompt = mock(ChatClient.ChatClientRequestSpec.class);
+        ChatClient.CallResponseSpec response = mock(ChatClient.CallResponseSpec.class);
+        when(chatClient.prompt()).thenReturn(prompt);
+        when(prompt.user(anyString())).thenReturn(prompt);
+        when(prompt.call()).thenReturn(response);
+        when(response.content()).thenReturn("{\"serviceName\":\"Telefon wsparcia\",\"summary\":\"Kontakt seniorów z wolontariuszami\","
+                + "\"targetGroup\":[\"Seniorzy\"],\"steps\":[\"Rozpoznaj potrzeby\"],"
+                + "\"resources\":[\"Telefon\"],\"partners\":[\"CUS\"],"
+                + "\"risks\":[\"Niski udział\"],\"successMeasures\":[\"Liczba rozmów\"]}");
+        MvcResult planResult = mvc.perform(post("/api/v1/middleman/plans")
+                        .session(memberCsrf.session()).header("X-CSRF-TOKEN", memberCsrf.token())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"innovationId\":" + innovation.getId() + ",\"institution\":\"CUS\","
+                                + "\"targetGroup\":\"Seniorzy w gminie\",\"need\":\"Kontakt społeczny\","
+                                + "\"constraints\":\"Ograniczony budżet\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.status").value("AI_DRAFT"))
+                .andExpect(jsonPath("$.payload.draft").value(true))
+                .andReturn();
+        long planId = ((Number) JsonPath.read(planResult.getResponse().getContentAsString(), "$.id")).longValue();
+        mvc.perform(get("/api/v1/middleman/plans/{id}", planId).session(member))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.payload.plan.serviceName").value("Telefon wsparcia"));
+        mvc.perform(get("/api/v1/staff/middleman/plans").session(staff))
+                .andExpect(jsonPath("$[?(@.id == " + planId + ")].status").value("AI_DRAFT"));
+
+        mvc.perform(get("/api/v1/notifications").session(member))
+                .andExpect(jsonPath("$[?(@.targetType == 'GRANT_APPLICATION' && @.targetId == "
+                        + applicationId + ")].kind").value("GRANT_STATUS"))
+                .andExpect(jsonPath("$[?(@.targetType == 'MENTOR_CONVERSATION' && @.targetId == "
+                        + conversationId + ")].kind").value("MENTOR_MESSAGE"));
+        mvc.perform(get("/api/v1/notifications").session(staff))
+                .andExpect(jsonPath("$[?(@.targetType == 'GRANT_APPLICATION' && @.targetId == "
+                        + applicationId + ")].kind").value("NEW_GRANT_APPLICATION"))
+                .andExpect(jsonPath("$[?(@.targetType == 'TESTER_FEEDBACK')].kind").value("TESTER_ACTIVITY"));
     }
 
     private MockHttpSession login(String email, AppUserRole role) throws Exception {

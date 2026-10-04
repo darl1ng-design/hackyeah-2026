@@ -98,6 +98,11 @@ class HubAppApplicationTests {
         assertTrue(json.contains("/api/v1/admin/resources"));
         assertTrue(json.contains("/api/v1/staff/ideas/{id}/replies"));
         assertTrue(json.contains("/api/v1/notifications"));
+        assertTrue(json.contains("/api/v1/grant-calls"));
+        assertTrue(json.contains("/api/v1/innovations/{id}/tester-feedback"));
+        assertTrue(json.contains("/api/v1/mentor/conversations"));
+        assertTrue(json.contains("/api/v1/middleman/plans"));
+        assertTrue(json.contains("NEW_GRANT_APPLICATION"));
         assertTrue(json.contains("MALOPOLSKA"));
 
         String exportDir = System.getProperty("export.openapi.dir");

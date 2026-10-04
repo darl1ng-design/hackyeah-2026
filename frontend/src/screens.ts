@@ -18,6 +18,10 @@ import { QueueIdeaPage } from './features/panel/QueueIdeaPage';
 import { KnowledgePage } from './features/panel/KnowledgePage';
 import { EditorPage } from './features/panel/EditorPage';
 import { TrendsPage } from './features/panel/TrendsPage';
+import { TesterQueuePage } from './features/testing/TesterQueuePage';
+import { GrantCallsPage, MyApplicationsPage, StaffGrantApplicationsPage, AdminGrantCallsPage } from './features/grants/GrantPages';
+import { MentorHomePage, MentorDetailPage, MentorQueuePage } from './features/mentors/MentorPages';
+import { MiddlemanPage, StaffMiddlemanPage } from './features/middleman/MiddlemanPages';
 
 export type ScreenProps = { route: Route };
 
@@ -39,4 +43,15 @@ export const screens: Record<Exclude<RouteName, 'notfound'>, ComponentType<Scree
   wiedza: KnowledgePage,
   edytor: EditorPage,
   trendy: TrendsPage,
+  nabory: GrantCallsPage,
+  nabor: GrantCallsPage,
+  wnioski: MyApplicationsPage,
+  mentorzy: MentorHomePage,
+  mentor: MentorDetailPage,
+  adaptuj: MiddlemanPage,
+  testerQueue: TesterQueuePage,
+  grantQueue: StaffGrantApplicationsPage,
+  mentorQueue: MentorQueuePage,
+  middlemanQueue: StaffMiddlemanPage,
+  grantAdmin: AdminGrantCallsPage,
 };

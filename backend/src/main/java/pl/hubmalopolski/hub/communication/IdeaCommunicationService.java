@@ -9,6 +9,7 @@ import pl.hubmalopolski.hub.domain.AppUserRole;
 import pl.hubmalopolski.hub.domain.Idea;
 import pl.hubmalopolski.hub.domain.IdeaReply;
 import pl.hubmalopolski.hub.domain.NotificationKind;
+import pl.hubmalopolski.hub.domain.NotificationTargetType;
 import pl.hubmalopolski.hub.domain.UserNotification;
 import pl.hubmalopolski.hub.repo.AppUserRepository;
 import pl.hubmalopolski.hub.repo.IdeaReplyRepository;
@@ -21,8 +22,9 @@ import java.util.List;
 @Service
 public class IdeaCommunicationService {
     public record ReplyDto(Long id, Long ideaId, String body, String author, Instant createdAt) {}
-    public record NotificationDto(Long id, Long ideaId, String kind, String title,
-                                  Instant createdAt, boolean read) {}
+    public record NotificationDto(Long id, Long ideaId, NotificationKind kind,
+                                  NotificationTargetType targetType, Long targetId,
+                                  String title, Instant createdAt, boolean read) {}
 
     private final AppUserRepository users;
     private final IdeaRepository ideas;
@@ -99,9 +101,9 @@ public class IdeaCommunicationService {
     }
 
     private static NotificationDto toDto(UserNotification notification) {
-        return new NotificationDto(notification.getId(), notification.getIdea().getId(),
-                notification.getKind().name(), notification.getTitle(), notification.getCreatedAt(),
-                notification.getReadAt() != null);
+        return new NotificationDto(notification.getId(), notification.getIdeaId(), notification.getKind(),
+                notification.getTargetType(), notification.getTargetId(), notification.getTitle(),
+                notification.getCreatedAt(), notification.getReadAt() != null);
     }
 
     private static String notificationTitle(String prefix, String ideaTitle) {
