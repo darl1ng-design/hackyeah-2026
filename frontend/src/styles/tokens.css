@@ -1,0 +1,180 @@
+/* Kompas Małopolski design system tokens — copied from claude.ai/design (_ds/…/tokens). Fonts: @fontsource in main.tsx. */
+:root {
+  /* Brand — base */
+  --red-50: #fdecee;
+  --red-100: #f9d0d3;
+  --red-200: #f0a1a7;
+  --red-500: #e5404a;
+  --red-600: #d71b27;
+  --red-700: #b5141f;
+  --red-800: #921018;
+  --red-900: #5e0a10;
+  --yellow-50: #fff8e1;
+  --yellow-100: #fff0c2;
+  --yellow-200: #fee08a;
+  --yellow-500: #fbbb01;
+  --yellow-600: #e0a600;
+  --yellow-700: #b88700;
+  --yellow-900: #5c4300;
+  --white: #ffffff;
+  --black: #000000;
+  /* Neutrals */
+  --gray-50: #f7f7f8;
+  --gray-100: #f0f0f2;
+  --gray-200: #e2e2e5;
+  --gray-300: #c9c9cd;
+  --gray-400: #a3a3a8;
+  --gray-500: #7a7a80;
+  --gray-600: #5f5f64;
+  --gray-700: #46464a;
+  --gray-800: #2a2a2c;
+  --gray-900: #141415;
+  /* Semantic — base */
+  --green-50: #e8f5ec;
+  --green-600: #1e7a3c;
+  --green-700: #165c2d;
+  --blue-50: #e8f0fa;
+  --blue-600: #1f5fad;
+  --blue-700: #174a87;
+  /* Text */
+  --fg-1: var(--black);
+  --fg-2: var(--gray-700);
+  --fg-3: var(--gray-600);
+  --fg-disabled: var(--gray-400);
+  --fg-inverse: var(--white);
+  --fg-brand: var(--red-600);
+  --fg-link: var(--red-700);
+  --fg-link-hover: var(--red-800);
+  --text-body: var(--fg-1);
+  --text-muted: var(--fg-3);
+  --text-heading: var(--black);
+  /* Surfaces */
+  --bg-page: var(--white);
+  --bg-subtle: var(--gray-50);
+  --bg-muted: var(--gray-100);
+  --bg-inverse: var(--black);
+  --bg-brand: var(--red-600);
+  --bg-accent: var(--yellow-500);
+  --bg-accent-soft: var(--yellow-50);
+  --bg-brand-soft: var(--red-50);
+  --surface-card: var(--white);
+  --surface-raised: var(--white);
+  --surface-overlay: rgba(0, 0, 0, 0.56);
+  /* Borders */
+  --border-subtle: var(--gray-200);
+  --border-default: var(--gray-300);
+  --border-control: var(--gray-500);
+  --border-strong: var(--black);
+  --border-brand: var(--red-600);
+  /* Actions */
+  --action-primary: var(--red-600);
+  --action-primary-hover: var(--red-700);
+  --action-primary-press: var(--red-800);
+  --action-primary-fg: var(--white);
+  --action-secondary: var(--black);
+  --action-secondary-hover: var(--gray-800);
+  --action-secondary-fg: var(--white);
+  --action-accent: var(--yellow-500);
+  --action-accent-hover: var(--yellow-600);
+  --action-accent-fg: var(--black);
+  --action-ghost-hover: var(--gray-100);
+  --action-ghost-press: var(--gray-200);
+  /* Feedback */
+  --success-fg: var(--green-600);
+  --success-bg: var(--green-50);
+  --info-fg: var(--blue-600);
+  --info-bg: var(--blue-50);
+  --warning-fg: var(--yellow-900);
+  --warning-bg: var(--yellow-100);
+  --warning-accent: var(--yellow-500);
+  --danger-fg: var(--red-700);
+  --danger-bg: var(--red-50);
+  /* Report statuses */
+  --status-new-fg: var(--blue-700);
+  --status-new-bg: var(--blue-50);
+  --status-progress-fg: var(--black);
+  --status-progress-bg: var(--yellow-500);
+  --status-resolved-fg: var(--green-700);
+  --status-resolved-bg: var(--green-50);
+  --status-rejected-fg: var(--gray-700);
+  --status-rejected-bg: var(--gray-100);
+  --status-forwarded-fg: var(--red-800);
+  --status-forwarded-bg: var(--red-50);
+
+  /* Typography */
+  --font-display: "Lexend", "Lato", system-ui, sans-serif;
+  --font-body: "Lato", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono:
+    "JetBrains Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+  --fw-black: 900;
+  --fs-display: 48px;
+  --lh-display: 56px;
+  --fs-h1: 36px;
+  --lh-h1: 44px;
+  --fs-h2: 28px;
+  --lh-h2: 36px;
+  --fs-h3: 22px;
+  --lh-h3: 30px;
+  --fs-h4: 18px;
+  --lh-h4: 26px;
+  --fs-body-lg: 18px;
+  --lh-body-lg: 28px;
+  --fs-body: 16px;
+  --lh-body: 24px;
+  --fs-sm: 14px;
+  --lh-sm: 20px;
+  --fs-xs: 12px;
+  --lh-xs: 16px;
+  --ls-display: -0.02em;
+  --ls-heading: -0.01em;
+  --ls-overline: 0.08em;
+
+  /* Spacing, radii, shadows, layout */
+  --space-0: 0;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-pill: 999px;
+  --border-w: 1px;
+  --border-w-strong: 2px;
+  --border-w-rule: 4px;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.16);
+  --focus-ring: 0 0 0 3px var(--yellow-500), 0 0 0 5px var(--black);
+  --control-h-sm: 36px;
+  --control-h-md: 44px;
+  --control-h-lg: 52px;
+  --container-max: 1200px;
+  --content-max: 760px;
+  --header-h: 72px;
+  --sidebar-w: 264px;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  --dur-fast: 120ms;
+  --dur-base: 200ms;
+  --dur-slow: 320ms;
+  --z-header: 100;
+  --z-overlay: 400;
+  --z-toast: 500;
+  --z-tooltip: 600;
+  /* App-level */
+  --gutter: clamp(16px, 4vw, 24px);
+}
