@@ -19,6 +19,17 @@ export type RouteName =
   | "wiedza"
   | "edytor"
   | "trendy"
+  | "nabory"
+  | "nabor"
+  | "wnioski"
+  | "mentorzy"
+  | "mentor"
+  | "adaptuj"
+  | "testerQueue"
+  | "grantQueue"
+  | "mentorQueue"
+  | "middlemanQueue"
+  | "grantAdmin"
   | "notfound";
 
 export type Route = {
@@ -38,6 +49,12 @@ const ROUTES: [RegExp, RouteName, string[]?, Record<string, string>?][] = [
   [/^\/pomysly\/nowy$/, "nowy"],
   [/^\/pomysly\/(\d+)$/, "pomysl", ["id"]],
   [/^\/zasoby$/, "zasoby"],
+  [/^\/nabory$/, "nabory"],
+  [/^\/nabory\/(\d+)$/, "nabor", ["id"]],
+  [/^\/moje-wnioski$/, "wnioski"],
+  [/^\/mentorzy$/, "mentorzy"],
+  [/^\/mentorzy\/(\d+)$/, "mentor", ["id"]],
+  [/^\/adaptuj(?:\/(\d+))?$/, "adaptuj", ["id"]],
   [/^\/logowanie$/, "konto"],
   [/^\/rejestracja$/, "konto", [], { tab: "register" }],
   [/^\/powiadomienia$/, "powiad"],
@@ -51,11 +68,16 @@ const ROUTES: [RegExp, RouteName, string[]?, Record<string, string>?][] = [
     ["type", "id"],
   ],
   [/^\/panel\/trendy$/, "trendy"],
+  [/^\/panel\/testerzy(?:\/(\d+))?$/, "testerQueue", ["id"]],
+  [/^\/panel\/wnioski(?:\/(\d+))?$/, "grantQueue", ["id"]],
+  [/^\/panel\/mentorzy(?:\/(\d+))?$/, "mentorQueue", ["id"]],
+  [/^\/panel\/adaptacje$/, "middlemanQueue"],
+  [/^\/panel\/nabory$/, "grantAdmin"],
 ];
 
-export const AUTH_ROUTES: RouteName[] = ["nowy", "powiad"];
-export const STAFF_ROUTES: RouteName[] = ["praporty", "ppomysly", "ppomysl"];
-export const ADMIN_ROUTES: RouteName[] = ["wiedza", "edytor", "trendy"];
+export const AUTH_ROUTES: RouteName[] = ["nowy", "powiad", "nabor", "wnioski", "mentorzy", "mentor", "adaptuj"];
+export const STAFF_ROUTES: RouteName[] = ["praporty", "ppomysly", "ppomysl", "testerQueue", "grantQueue", "mentorQueue", "middlemanQueue"];
+export const ADMIN_ROUTES: RouteName[] = ["wiedza", "edytor", "trendy", "grantAdmin"];
 export const isPanelRoute = (n: RouteName) =>
   STAFF_ROUTES.includes(n) || ADMIN_ROUTES.includes(n);
 

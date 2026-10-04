@@ -23,11 +23,16 @@ public class UserNotification {
     @JoinColumn(name = "recipient_user_id", nullable = false)
     private AppUser recipient;
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "idea_id", nullable = false)
+    @JoinColumn(name = "idea_id")
     private Idea idea;
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private NotificationKind kind;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "target_type", nullable = false)
+    private NotificationTargetType targetType;
+    @Column(name = "target_id", nullable = false)
+    private Long targetId;
     @Column(nullable = false)
     private String title;
     @Column(name = "created_at", nullable = false)
@@ -41,13 +46,27 @@ public class UserNotification {
         this.recipient = recipient;
         this.idea = idea;
         this.kind = kind;
+        this.targetType = NotificationTargetType.IDEA;
+        this.targetId = idea.getId();
+        this.title = title;
+    }
+
+    public UserNotification(AppUser recipient, NotificationKind kind, NotificationTargetType targetType,
+                            Long targetId, String title) {
+        this.recipient = recipient;
+        this.kind = kind;
+        this.targetType = targetType;
+        this.targetId = targetId;
         this.title = title;
     }
 
     public Long getId() { return id; }
     public AppUser getRecipient() { return recipient; }
     public Idea getIdea() { return idea; }
+    public Long getIdeaId() { return idea == null ? null : idea.getId(); }
     public NotificationKind getKind() { return kind; }
+    public NotificationTargetType getTargetType() { return targetType; }
+    public Long getTargetId() { return targetId; }
     public String getTitle() { return title; }
     public Instant getCreatedAt() { return createdAt; }
     public Instant getReadAt() { return readAt; }

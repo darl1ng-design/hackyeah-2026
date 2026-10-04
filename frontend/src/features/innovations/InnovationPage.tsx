@@ -8,6 +8,7 @@ import { go } from "../../lib/router";
 import type { ScreenProps } from "../../screens";
 import { useSession } from "../../session";
 import { InnovationCard } from "./InnovationCard";
+import { TesterFeedbackForm } from "../testing/TesterFeedbackForm";
 import s from "./InnovationPage.module.css";
 
 export function InnovationPage({ route }: ScreenProps) {
@@ -111,6 +112,8 @@ export function InnovationPage({ route }: ScreenProps) {
         </aside>
       </div>
 
+      <TesterFeedbackForm innovationId={i.id} />
+
       <section className={s.cta} aria-labelledby="inn-cta">
         <div className={s.ctaText}>
           <span className={s.ctaOverline}>Co dalej</span>
@@ -135,6 +138,9 @@ export function InnovationPage({ route }: ScreenProps) {
           </Button>
           <a href="#/pomysly/nowy" className={s.ctaLink}>
             Zgłoś własny pomysł
+          </a>
+          <a href="#/adaptuj" className={s.ctaLink}>
+            Dostosuj innowację do potrzeb instytucji
           </a>
         </div>
       </section>

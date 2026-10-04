@@ -64,7 +64,7 @@ export type MatchItem = {
 export type MatchResponse = {
   reportId: number;
   reportStatus: ReportStatus;
-  area: Area;
+  area: Area | null;
   matches: MatchItem[];
 };
 
@@ -100,10 +100,24 @@ export type AssistantRequest = {
   ideaContext?: Partial<IdeaRequest>;
 };
 
+export type NotificationKind =
+  | "NEW_IDEA"
+  | "IDEA_REPLY"
+  | "NEW_GRANT_APPLICATION"
+  | "MENTOR_MESSAGE"
+  | "GRANT_STATUS"
+  | "TESTER_ACTIVITY";
+export type NotificationTargetType =
+  | "IDEA"
+  | "MENTOR_CONVERSATION"
+  | "GRANT_APPLICATION"
+  | "TESTER_FEEDBACK";
 export type Notification = {
   id: number;
-  ideaId: number;
-  kind: "REPLY" | "MODERATION";
+  ideaId: number | null;
+  kind: NotificationKind;
+  targetType: NotificationTargetType;
+  targetId: number;
   title: string;
   createdAt: string;
   read: boolean;
@@ -139,3 +153,82 @@ export type RegisterRequest = {
   email: string;
   password: string;
 };
+
+
+export type WorkflowRecord<T extends Record<string, unknown> = Record<string, unknown>> = {
+  id: number;
+  module: string;
+  referenceId: number | null;
+  status: string;
+  title: string;
+  payload: T;
+  author: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+export type TesterFeedbackRequest = {
+  interested: true;
+  rating?: number;
+  feedback?: string;
+  suggestion?: string;
+};
+export type GrantFieldType = "TEXT" | "TEXTAREA" | "NUMBER" | "SELECT" | "CHECKBOX";
+export type GrantCallStatus = "DRAFT" | "OPEN" | "CLOSED";
+export type GrantApplicationStatus = "SUBMITTED" | "UNDER_REVIEW" | "APPROVED" | "REJECTED";
+export type GrantField = {
+  key: string;
+  label: string;
+  type: GrantFieldType;
+  required: boolean;
+  options?: string[];
+};
+export type GrantCall = WorkflowRecord<{
+  description: string;
+  opensAt: string;
+  closesAt: string;
+  fields: GrantField[];
+}>;
+export type GrantApplication = WorkflowRecord<{
+  answers: Record<string, string>;
+  formSnapshot: GrantCall["payload"];
+}>;
+export type GrantCallRequest = {
+  title: string;
+  description?: string;
+  opensAt: string;
+  closesAt: string;
+  status: GrantCallStatus;
+  fields: GrantField[];
+};
+export type MentorMessage = {
+  id: number;
+  author: string;
+  authorRole: Role;
+  body: string;
+  createdAt: string;
+};
+export type MentorConversation = {
+  id: number;
+  subject: string;
+  status: "OPEN" | "CLOSED";
+  author: string;
+  createdAt: string;
+  messages: MentorMessage[];
+};
+export type MiddlemanPlan = WorkflowRecord<{
+  draft: true;
+  label: string;
+  innovationId: number;
+  innovationTitle: string;
+  input: { institution: string; targetGroup: string; need: string; constraints: string };
+  plan: {
+    serviceName: string;
+    summary: string;
+    targetGroup: string[];
+    steps: string[];
+    resources: string[];
+    partners: string[];
+    risks: string[];
+    successMeasures: string[];
+  };
+}>;
