@@ -1,5 +1,6 @@
 // Live input level as a dotted halftone waveform (prototype reference image), drawn on canvas.
 // One level sample (every 50 ms) = one dot column; columns scroll left continuously by elapsed time.
+// Always 60 fps, also with prefers-reduced-motion: it is a live input meter (feedback), not decoration.
 import { useEffect, useRef } from "react";
 import type { Levels } from "./useDictation";
 import s from "./Dictation.module.css";
@@ -19,7 +20,6 @@ export function Waveform({ getLevels, compact }: Props) {
     const css = getComputedStyle(canvas);
     const from = css.getPropertyValue("--red-600").trim() || "red";
     const to = css.getPropertyValue("--yellow-500").trim() || "orange";
-    const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
     let raf = 0;
     let w = 0;
     let h = 0;
@@ -79,13 +79,11 @@ export function Waveform({ getLevels, compact }: Props) {
         }
         ctx.globalAlpha = 1;
       }
-      if (!reduce) raf = requestAnimationFrame(draw);
+      raf = requestAnimationFrame(draw);
     };
     draw();
-    const slow = reduce ? window.setInterval(draw, 500) : 0;
     return () => {
       cancelAnimationFrame(raf);
-      clearInterval(slow);
       ro.disconnect();
     };
   }, [getLevels]);
