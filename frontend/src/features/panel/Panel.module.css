@@ -1,0 +1,232 @@
+/* Shared styles for panel screens (prototype lines 539–818). */
+.page {
+  max-width: 1100px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+.narrow {
+  max-width: 760px;
+}
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-width: 640px;
+}
+.headRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  justify-content: space-between;
+  align-items: flex-end;
+}
+.sub {
+  font-size: var(--fs-sm);
+  color: var(--gray-700);
+}
+.rowMain {
+  flex: 1 1 260px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.rowTitle {
+  font-weight: var(--fw-bold);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.strong {
+  font-weight: var(--fw-bold);
+}
+.url {
+  word-break: break-all;
+}
+.emptyRow {
+  padding: var(--space-6) var(--space-5);
+  color: var(--gray-700);
+}
+
+/* Reports: expandable rows */
+.repItem {
+  border-bottom: 1px solid var(--border-subtle);
+}
+.repToggle {
+  width: 100%;
+  text-align: left;
+  border: 0;
+  font: inherit;
+  color: var(--black);
+  background: var(--white);
+  cursor: pointer;
+  padding: 14px var(--space-5);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-6);
+  align-items: center;
+}
+.repToggle:hover,
+.repToggle[aria-expanded="true"] {
+  background: var(--gray-50);
+}
+.repNo {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  min-width: 130px;
+}
+.repDate {
+  font-size: var(--fs-sm);
+  color: var(--gray-700);
+  min-width: 90px;
+}
+.repBody {
+  padding: var(--space-1) var(--space-5) var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  background: var(--gray-50);
+}
+.repDesc {
+  max-width: 760px;
+  line-height: 26px;
+  white-space: pre-line;
+}
+.inlineForm {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: flex-end;
+}
+
+/* Cards */
+.card {
+  background: var(--surface-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.cardLg {
+  padding: var(--space-6);
+  gap: var(--space-4);
+}
+.formCard {
+  padding: clamp(20px, 4vw, 32px);
+  gap: var(--space-5);
+}
+.filterCard {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  align-items: flex-end;
+}
+
+/* Idea detail */
+.cols {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+  align-items: flex-start;
+}
+.colMain {
+  flex: 2 1 420px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+.aside {
+  flex: 1 1 260px;
+  min-width: 0;
+}
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.replies {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.replyHead {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  justify-content: space-between;
+}
+.modText {
+  font-size: 15px;
+  line-height: 22px;
+  color: var(--gray-800);
+}
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* Editor */
+.grid3 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-4);
+}
+.dlgActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+/* Trends */
+.total {
+  font-family: var(--font-display);
+  font-weight: var(--fw-bold);
+  font-size: 48px;
+  line-height: 56px;
+}
+.blocks {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
+  gap: var(--space-4);
+}
+.bars {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.barRow {
+  display: grid;
+  grid-template-columns: minmax(0, 150px) minmax(0, 1fr) 36px;
+  gap: var(--space-3);
+  align-items: center;
+  font-size: var(--fs-sm);
+}
+.barLabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.barTrack {
+  height: 12px;
+  background: var(--gray-100);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+.barFill {
+  display: block;
+  height: 100%;
+  border-radius: var(--radius-pill);
+  background: var(--bar);
+}
+.barCount {
+  font-weight: var(--fw-bold);
+  text-align: right;
+}
