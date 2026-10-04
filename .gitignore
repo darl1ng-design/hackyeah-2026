@@ -1,3 +1,14 @@
+HELP.md
+app.log
+
+### Python / local ###
+.env
+.venv/
+__pycache__/
+docs/scratchpad/
+.env.bak.*
+.claude/settings.local.json
+
 ### Maven / Java ###
 target/
 .mvn/wrapper/maven-wrapper.jar
@@ -20,11 +31,11 @@ target/
 *.ipr
 
 ### NetBeans ###
-nbproject/private/
-nbbuild/
-dist/
-nbdist/
-.nb-gradle/
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
 build/
 !**/src/main/**/build/
 !**/src/test/**/build/
@@ -36,3 +47,10 @@ build/
 .env
 .env.*
 !.env.example
+
+### GGUF models (fetched by scripts/fetch_models.sh) ###
+models/
+
+### Local tool artifacts ###
+.playwright-mcp/
+.serena/

@@ -1,0 +1,139 @@
+.shell {
+  display: flex;
+  min-height: 100vh;
+  background: var(--gray-50);
+}
+.sidebar {
+  width: var(--sidebar-w);
+  flex: none;
+  background: var(--black);
+  color: var(--white);
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  box-sizing: border-box;
+  padding: var(--space-6) var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  overflow: auto;
+}
+.sidebar a,
+.topbar a {
+  color: var(--white);
+}
+.logo {
+  text-decoration: none;
+  padding: 0 var(--space-2);
+}
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.navLink {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  height: 44px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  font-weight: var(--fw-bold);
+  white-space: nowrap;
+}
+.navLink:hover {
+  background: var(--gray-800);
+  color: var(--white);
+}
+.navLink[aria-current="page"] {
+  background: var(--white);
+  color: var(--black);
+}
+.navLabel {
+  flex: 1;
+}
+.count {
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  box-sizing: border-box;
+  border-radius: var(--radius-pill);
+  background: var(--red-600);
+  color: var(--white);
+  font-size: var(--fs-xs);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.user {
+  margin-top: auto;
+  border-top: 1px solid var(--gray-800);
+  padding: var(--space-4) var(--space-2) 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  font-size: var(--fs-sm);
+}
+.role {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--ls-overline);
+  text-transform: uppercase;
+  color: var(--yellow-500);
+}
+.email {
+  word-break: break-all;
+}
+
+.topbar {
+  display: none;
+  background: var(--black);
+  color: var(--white);
+  padding: var(--space-3) var(--space-4);
+  flex-direction: column;
+  gap: var(--space-3);
+  position: sticky;
+  top: 0;
+  z-index: var(--z-header);
+}
+.topRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+}
+.topLinks {
+  display: flex;
+  gap: var(--space-4);
+  font-size: var(--fs-sm);
+}
+.topNav {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+}
+.topNav .navLink svg,
+.topNav .navLink > span:first-child {
+  display: none;
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+  padding: clamp(20px, 4vw, 40px);
+  outline: none;
+  box-sizing: border-box;
+}
+
+@media (max-width: 959px) {
+  .shell {
+    flex-direction: column;
+  }
+  .sidebar {
+    display: none;
+  }
+  .topbar {
+    display: flex;
+  }
+}

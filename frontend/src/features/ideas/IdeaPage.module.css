@@ -1,0 +1,30 @@
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.replies {
+  border-top: 2px solid var(--black);
+  padding-top: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  scroll-margin-top: calc(var(--header-h) + var(--space-12));
+}
+.reply {
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.replyHead {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  justify-content: space-between;
+}
+.back {
+  align-self: flex-start;
+}

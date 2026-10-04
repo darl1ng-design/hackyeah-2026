@@ -1,0 +1,14 @@
+# Override for deployed environments: use registry images instead of local builds.
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# Set REGISTRY (e.g. code.algoweave.eu/janekfiranek/hackyeah) in the environment.
+# (!reset is a compose-spec merge tag; plain YAML linters don't know it.)
+services:
+  db:
+    image: ${REGISTRY:?set REGISTRY}/hackyeah-pg:latest
+    build: !reset null
+    ports: !reset []
+  app:
+    image: ${REGISTRY:?set REGISTRY}/hackyeah-app:latest
+    build: !reset null
+    ports: !reset
+      - "${APP_PORT:-8080}:8080"

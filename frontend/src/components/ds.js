@@ -1,0 +1,1839 @@
+/* Vendored from claude.ai/design: Kompas Małopolski design system (_ds_bundle.js).
+   Do not edit by hand — re-import from the design project instead. Types: ds.d.ts */
+import React from 'react';
+// components/brand/Icon.jsx
+function _extends() { return _extends = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends.apply(null, arguments); }
+const ICON_CDN = 'https://unpkg.com/lucide-static@0.460.0/icons/';
+
+/** Lucide icon rendered as a CSS mask so it inherits currentColor. */
+function Icon({
+  name,
+  size = 20,
+  color = 'currentColor',
+  label,
+  style,
+  ...rest
+}) {
+  const url = 'url(' + ICON_CDN + name + '.svg)';
+  return /*#__PURE__*/React.createElement("span", _extends({
+    role: label ? 'img' : undefined,
+    "aria-label": label,
+    "aria-hidden": label ? undefined : true,
+    style: {
+      display: 'inline-block',
+      flex: 'none',
+      width: size,
+      height: size,
+      backgroundColor: color,
+      WebkitMaskImage: url,
+      maskImage: url,
+      WebkitMaskSize: 'contain',
+      maskSize: 'contain',
+      WebkitMaskRepeat: 'no-repeat',
+      maskRepeat: 'no-repeat',
+      WebkitMaskPosition: 'center',
+      maskPosition: 'center',
+      ...style
+    }
+  }, rest));
+}
+
+// components/actions/Button.jsx
+const BTN_SIZES = {
+  sm: {
+    h: 36,
+    px: 14,
+    fs: 14,
+    icon: 16
+  },
+  md: {
+    h: 44,
+    px: 20,
+    fs: 16,
+    icon: 20
+  },
+  lg: {
+    h: 52,
+    px: 24,
+    fs: 18,
+    icon: 20
+  }
+};
+const BTN_VARIANTS = {
+  primary: {
+    bg: 'var(--action-primary)',
+    hover: 'var(--action-primary-hover)',
+    press: 'var(--action-primary-press)',
+    fg: 'var(--white)',
+    border: 'transparent'
+  },
+  secondary: {
+    bg: 'var(--black)',
+    hover: 'var(--gray-800)',
+    press: 'var(--gray-700)',
+    fg: 'var(--white)',
+    border: 'transparent'
+  },
+  accent: {
+    bg: 'var(--yellow-500)',
+    hover: 'var(--yellow-600)',
+    press: 'var(--yellow-700)',
+    fg: 'var(--black)',
+    border: 'transparent'
+  },
+  outline: {
+    bg: 'var(--white)',
+    hover: 'var(--gray-100)',
+    press: 'var(--gray-200)',
+    fg: 'var(--black)',
+    border: 'var(--black)'
+  },
+  ghost: {
+    bg: 'transparent',
+    hover: 'var(--gray-100)',
+    press: 'var(--gray-200)',
+    fg: 'var(--red-700)',
+    border: 'transparent'
+  }
+};
+function Button({
+  variant = 'primary',
+  size = 'md',
+  iconLeft,
+  iconRight,
+  fullWidth = false,
+  disabled = false,
+  type = 'button',
+  onClick,
+  children,
+  style,
+  ...rest
+}) {
+  const [hover, setHover] = React.useState(false);
+  const [press, setPress] = React.useState(false);
+  const s = BTN_SIZES[size] || BTN_SIZES.md;
+  const v = BTN_VARIANTS[variant] || BTN_VARIANTS.primary;
+  const bg = disabled ? 'var(--gray-200)' : press ? v.press : hover ? v.hover : v.bg;
+  return /*#__PURE__*/React.createElement("button", _extends({
+    type: type,
+    disabled: disabled,
+    onClick: onClick,
+    onMouseEnter: () => setHover(true),
+    onMouseLeave: () => {
+      setHover(false);
+      setPress(false);
+    },
+    onMouseDown: () => setPress(true),
+    onMouseUp: () => setPress(false),
+    style: {
+      display: fullWidth ? 'flex' : 'inline-flex',
+      width: fullWidth ? '100%' : undefined,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 8,
+      height: s.h,
+      padding: '0 ' + s.px + 'px',
+      borderRadius: 'var(--radius-md)',
+      border: '2px solid ' + (disabled ? 'transparent' : v.border),
+      background: bg,
+      color: disabled ? 'var(--gray-500)' : v.fg,
+      fontFamily: 'var(--font-body)',
+      fontWeight: 700,
+      fontSize: s.fs,
+      lineHeight: 1,
+      whiteSpace: 'nowrap',
+      cursor: disabled ? 'not-allowed' : 'pointer',
+      transform: press && !disabled ? 'translateY(1px)' : 'none',
+      transition: 'background var(--dur-fast) var(--ease-standard)',
+      boxSizing: 'border-box',
+      ...style
+    }
+  }, rest), iconLeft && /*#__PURE__*/React.createElement(Icon, {
+    name: iconLeft,
+    size: s.icon
+  }), children, iconRight && /*#__PURE__*/React.createElement(Icon, {
+    name: iconRight,
+    size: s.icon
+  }));
+}
+
+// components/actions/IconButton.jsx
+const IB_SIZES = {
+  sm: {
+    box: 36,
+    icon: 18
+  },
+  md: {
+    box: 44,
+    icon: 20
+  },
+  lg: {
+    box: 52,
+    icon: 24
+  }
+};
+function IconButton({
+  icon,
+  label,
+  variant = 'ghost',
+  size = 'md',
+  disabled = false,
+  onClick,
+  style,
+  ...rest
+}) {
+  const [hover, setHover] = React.useState(false);
+  const s = IB_SIZES[size] || IB_SIZES.md;
+  const map = {
+    ghost: {
+      bg: hover ? 'var(--gray-100)' : 'transparent',
+      fg: 'var(--black)',
+      border: 'transparent'
+    },
+    outline: {
+      bg: hover ? 'var(--gray-100)' : 'var(--white)',
+      fg: 'var(--black)',
+      border: 'var(--gray-300)'
+    },
+    primary: {
+      bg: hover ? 'var(--action-primary-hover)' : 'var(--action-primary)',
+      fg: 'var(--white)',
+      border: 'transparent'
+    },
+    inverse: {
+      bg: hover ? 'var(--gray-800)' : 'transparent',
+      fg: 'var(--white)',
+      border: 'transparent'
+    }
+  };
+  const v = map[variant] || map.ghost;
+  return /*#__PURE__*/React.createElement("button", _extends({
+    type: "button",
+    "aria-label": label,
+    title: label,
+    disabled: disabled,
+    onClick: onClick,
+    onMouseEnter: () => setHover(true),
+    onMouseLeave: () => setHover(false),
+    style: {
+      width: s.box,
+      height: s.box,
+      display: 'inline-grid',
+      placeItems: 'center',
+      flex: 'none',
+      padding: 0,
+      borderRadius: 'var(--radius-md)',
+      border: '1px solid ' + v.border,
+      background: v.bg,
+      color: disabled ? 'var(--gray-400)' : v.fg,
+      cursor: disabled ? 'not-allowed' : 'pointer',
+      transition: 'background var(--dur-fast) var(--ease-standard)',
+      ...style
+    }
+  }, rest), /*#__PURE__*/React.createElement(Icon, {
+    name: icon,
+    size: s.icon
+  }));
+}
+
+// components/brand/Logo.jsx
+const LOGO_SRC = {
+  color: 'data:image/png;base64,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',
+  reversed: 'data:image/png;base64,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',
+  mono: 'data:image/png;base64,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'
+};
+function Logo({
+  variant = 'color',
+  size = 40,
+  showName = true,
+  name = 'Kompas Małopolski',
+  tagline,
+  style
+}) {
+  const inverse = variant === 'reversed';
+  return /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: Math.round(size * 0.3),
+      color: inverse ? 'var(--white)' : 'var(--black)',
+      ...style
+    }
+  }, /*#__PURE__*/React.createElement("img", {
+    src: LOGO_SRC[variant] || LOGO_SRC.color,
+    alt: showName ? '' : name,
+    width: size,
+    height: size,
+    style: {
+      display: 'block',
+      flex: 'none'
+    }
+  }), showName && /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: 'flex',
+      flexDirection: 'column'
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontFamily: 'var(--font-display)',
+      fontWeight: 700,
+      fontSize: Math.round(size * 0.48),
+      lineHeight: 1.1,
+      letterSpacing: '-0.01em',
+      whiteSpace: 'nowrap'
+    }
+  }, name), tagline && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontFamily: 'var(--font-body)',
+      fontSize: Math.max(12, Math.round(size * 0.3)),
+      lineHeight: 1.3,
+      color: inverse ? 'var(--gray-300)' : 'var(--fg-3)',
+      whiteSpace: 'nowrap'
+    }
+  }, tagline)));
+}
+
+// components/feedback/Alert.jsx
+const ALERT_TONES = {
+  info: {
+    accent: 'var(--black)',
+    on: 'var(--white)',
+    icon: 'info'
+  },
+  success: {
+    accent: 'var(--green-600)',
+    on: 'var(--white)',
+    icon: 'check'
+  },
+  warning: {
+    accent: 'var(--yellow-500)',
+    on: 'var(--black)',
+    icon: 'triangle-alert'
+  },
+  danger: {
+    accent: 'var(--red-600)',
+    on: 'var(--white)',
+    icon: 'circle-alert'
+  }
+};
+function Alert({
+  tone = 'info',
+  variant = 'card',
+  title,
+  children,
+  action,
+  onClose,
+  style
+}) {
+  const t = ALERT_TONES[tone] || ALERT_TONES.info;
+  const solid = variant === 'banner';
+  const fg = solid ? t.on : 'var(--black)';
+  return /*#__PURE__*/React.createElement("div", {
+    role: tone === 'danger' ? 'alert' : 'status',
+    style: {
+      display: 'flex',
+      gap: solid ? 12 : 16,
+      alignItems: 'flex-start',
+      boxSizing: 'border-box',
+      padding: solid ? '14px 16px' : '20px 20px 20px 20px',
+      borderRadius: solid ? 'var(--radius-md)' : 'var(--radius-lg)',
+      background: solid ? t.accent : 'var(--white)',
+      border: solid ? 0 : '1px solid var(--border-subtle)',
+      borderTop: solid ? 0 : '4px solid ' + t.accent,
+      color: fg,
+      fontFamily: 'var(--font-body)',
+      ...style
+    }
+  }, solid ? /*#__PURE__*/React.createElement(Icon, {
+    name: t.icon,
+    size: 24
+  }) : /*#__PURE__*/React.createElement("span", {
+    style: {
+      flex: 'none',
+      width: 32,
+      height: 32,
+      borderRadius: '50%',
+      background: t.accent,
+      color: t.on,
+      display: 'grid',
+      placeItems: 'center'
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: t.icon,
+    size: 18
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1,
+      minWidth: 0,
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 4,
+      paddingTop: solid ? 0 : 3
+    }
+  }, title && /*#__PURE__*/React.createElement("div", {
+    style: solid ? {
+      fontWeight: 700,
+      fontSize: 16,
+      lineHeight: '24px'
+    } : {
+      fontFamily: 'var(--font-display)',
+      fontWeight: 600,
+      fontSize: 18,
+      lineHeight: '26px',
+      letterSpacing: '-0.01em'
+    }
+  }, title), children && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 16,
+      lineHeight: '24px',
+      color: solid ? fg : 'var(--fg-2)'
+    }
+  }, children), action && /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 8
+    }
+  }, action)), onClose && /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    "aria-label": "Zamknij",
+    onClick: onClose,
+    style: {
+      flex: 'none',
+      width: 32,
+      height: 32,
+      margin: solid ? '-4px -4px 0 0' : '0 -4px 0 0',
+      border: 0,
+      borderRadius: 'var(--radius-md)',
+      background: 'transparent',
+      color: fg,
+      cursor: 'pointer',
+      display: 'grid',
+      placeItems: 'center'
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "x",
+    size: 20
+  })));
+}
+
+// components/feedback/Badge.jsx
+const BADGE_TONES = {
+  neutral: ['var(--gray-100)', 'var(--gray-800)'],
+  brand: ['var(--red-600)', 'var(--white)'],
+  accent: ['var(--yellow-500)', 'var(--black)'],
+  inverse: ['var(--black)', 'var(--white)'],
+  success: ['var(--success-bg)', 'var(--green-700)'],
+  info: ['var(--info-bg)', 'var(--blue-700)'],
+  warning: ['var(--warning-bg)', 'var(--warning-fg)'],
+  danger: ['var(--danger-bg)', 'var(--danger-fg)']
+};
+function Badge({
+  tone = 'neutral',
+  icon,
+  size = 'md',
+  children,
+  style
+}) {
+  const [bg, fg] = BADGE_TONES[tone] || BADGE_TONES.neutral;
+  const sm = size === 'sm';
+  return /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: 4,
+      height: sm ? 20 : 24,
+      padding: sm ? '0 6px' : '0 8px',
+      borderRadius: 'var(--radius-sm)',
+      background: bg,
+      color: fg,
+      fontFamily: 'var(--font-body)',
+      fontWeight: 700,
+      fontSize: sm ? 12 : 13,
+      lineHeight: 1,
+      whiteSpace: 'nowrap',
+      ...style
+    }
+  }, icon && /*#__PURE__*/React.createElement(Icon, {
+    name: icon,
+    size: sm ? 12 : 14
+  }), children);
+}
+const REPORT_STATUS = {
+  new: {
+    label: 'Nowe',
+    bg: 'var(--status-new-bg)',
+    fg: 'var(--status-new-fg)'
+  },
+  progress: {
+    label: 'W realizacji',
+    bg: 'var(--status-progress-bg)',
+    fg: 'var(--status-progress-fg)'
+  },
+  forwarded: {
+    label: 'Przekazane',
+    bg: 'var(--status-forwarded-bg)',
+    fg: 'var(--status-forwarded-fg)'
+  },
+  resolved: {
+    label: 'Rozwiązane',
+    bg: 'var(--status-resolved-bg)',
+    fg: 'var(--status-resolved-fg)'
+  },
+  rejected: {
+    label: 'Odrzucone',
+    bg: 'var(--status-rejected-bg)',
+    fg: 'var(--status-rejected-fg)'
+  }
+};
+function StatusBadge({
+  status = 'new',
+  children,
+  style
+}) {
+  const s = REPORT_STATUS[status] || REPORT_STATUS.new;
+  return /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: 6,
+      height: 28,
+      padding: '0 12px 0 10px',
+      borderRadius: 'var(--radius-pill)',
+      background: s.bg,
+      color: s.fg,
+      fontFamily: 'var(--font-body)',
+      fontWeight: 700,
+      fontSize: 14,
+      lineHeight: 1,
+      whiteSpace: 'nowrap',
+      ...style
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      width: 8,
+      height: 8,
+      borderRadius: '50%',
+      background: 'currentColor'
+    }
+  }), children || s.label);
+}
+
+// components/feedback/Dialog.jsx
+function Dialog({
+  open,
+  title,
+  children,
+  footer,
+  onClose,
+  width = 560,
+  style
+}) {
+  if (!open) return null;
+  return /*#__PURE__*/React.createElement("div", {
+    onClick: onClose,
+    style: {
+      position: 'fixed',
+      inset: 0,
+      zIndex: 'var(--z-overlay)',
+      background: 'var(--surface-overlay)',
+      display: 'grid',
+      placeItems: 'center',
+      padding: 16
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    role: "dialog",
+    "aria-modal": "true",
+    "aria-label": title,
+    onClick: e => e.stopPropagation(),
+    style: {
+      width: '100%',
+      maxWidth: width,
+      maxHeight: 'calc(100vh - 32px)',
+      overflow: 'auto',
+      background: 'var(--white)',
+      borderRadius: 'var(--radius-lg)',
+      boxShadow: 'var(--shadow-lg)',
+      borderTop: '4px solid var(--red-600)',
+      display: 'flex',
+      flexDirection: 'column',
+      ...style
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'flex-start',
+      gap: 16,
+      padding: '20px 20px 0 24px'
+    }
+  }, /*#__PURE__*/React.createElement("h2", {
+    style: {
+      flex: 1,
+      margin: '4px 0 0',
+      fontFamily: 'var(--font-display)',
+      fontWeight: 600,
+      fontSize: 22,
+      lineHeight: '30px',
+      letterSpacing: '-0.01em'
+    }
+  }, title), onClose && /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    "aria-label": "Zamknij",
+    onClick: onClose,
+    style: {
+      width: 40,
+      height: 40,
+      border: 0,
+      borderRadius: 'var(--radius-md)',
+      background: 'transparent',
+      cursor: 'pointer',
+      display: 'grid',
+      placeItems: 'center',
+      color: 'var(--black)'
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "x",
+    size: 22
+  }))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: '12px 24px 24px',
+      fontSize: 16,
+      lineHeight: '24px'
+    }
+  }, children), footer && /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      justifyContent: 'flex-end',
+      gap: 12,
+      padding: '16px 24px',
+      borderTop: '1px solid var(--border-subtle)',
+      background: 'var(--bg-subtle)',
+      borderRadius: '0 0 var(--radius-lg) var(--radius-lg)'
+    }
+  }, footer)));
+}
+
+// components/feedback/Toast.jsx
+function Toast({
+  tone = 'neutral',
+  message,
+  actionLabel,
+  onAction,
+  onClose,
+  style
+}) {
+  const icon = {
+    neutral: 'info',
+    success: 'circle-check',
+    danger: 'circle-alert'
+  }[tone] || 'info';
+  const ic = {
+    neutral: 'var(--white)',
+    success: 'var(--green-50)',
+    danger: 'var(--red-200)'
+  }[tone];
+  // App renders an always-mounted live region for the toast text; no role here (avoids double announce).
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 12,
+      minWidth: 320,
+      maxWidth: 480,
+      padding: '12px 12px 12px 16px',
+      borderRadius: 'var(--radius-md)',
+      background: 'var(--black)',
+      color: 'var(--white)',
+      boxShadow: 'var(--shadow-lg)',
+      fontSize: 16,
+      lineHeight: '24px',
+      ...style
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: icon,
+    size: 20,
+    color: ic
+  }), /*#__PURE__*/React.createElement("span", {
+    style: {
+      flex: 1
+    }
+  }, message), actionLabel && /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    onClick: onAction,
+    style: {
+      border: 0,
+      background: 'transparent',
+      color: 'var(--yellow-500)',
+      fontFamily: 'var(--font-body)',
+      fontWeight: 700,
+      fontSize: 16,
+      cursor: 'pointer',
+      padding: '4px 6px'
+    }
+  }, actionLabel), onClose && /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    "aria-label": "Zamknij",
+    onClick: onClose,
+    style: {
+      border: 0,
+      background: 'transparent',
+      color: 'var(--white)',
+      cursor: 'pointer',
+      display: 'grid',
+      padding: 4
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "x",
+    size: 18
+  })));
+}
+
+// components/feedback/Tooltip.jsx
+function Tooltip({
+  content,
+  placement = 'top',
+  children,
+  style
+}) {
+  const [open, setOpen] = React.useState(false);
+  const pos = placement === 'bottom' ? {
+    top: '100%',
+    marginTop: 8
+  } : {
+    bottom: '100%',
+    marginBottom: 8
+  };
+  return /*#__PURE__*/React.createElement("span", {
+    style: {
+      position: 'relative',
+      display: 'inline-flex',
+      ...style
+    },
+    onMouseEnter: () => setOpen(true),
+    onMouseLeave: () => setOpen(false),
+    onFocus: () => setOpen(true),
+    onBlur: () => setOpen(false)
+  }, children, open && /*#__PURE__*/React.createElement("span", {
+    role: "tooltip",
+    style: {
+      position: 'absolute',
+      left: '50%',
+      transform: 'translateX(-50%)',
+      ...pos,
+      zIndex: 'var(--z-tooltip)',
+      background: 'var(--black)',
+      color: 'var(--white)',
+      fontFamily: 'var(--font-body)',
+      fontSize: 14,
+      lineHeight: '20px',
+      padding: '6px 10px',
+      borderRadius: 'var(--radius-sm)',
+      whiteSpace: 'nowrap',
+      pointerEvents: 'none'
+    }
+  }, content, /*#__PURE__*/React.createElement("span", {
+    style: {
+      position: 'absolute',
+      left: '50%',
+      [placement === 'bottom' ? 'bottom' : 'top']: '100%',
+      marginLeft: -5,
+      borderLeft: '5px solid transparent',
+      borderRight: '5px solid transparent',
+      [placement === 'bottom' ? 'borderBottom' : 'borderTop']: '5px solid var(--black)'
+    }
+  })));
+}
+
+// components/forms/SearchField.jsx
+function SearchField({
+  placeholder = 'Czego szukasz? Np. godziny otwarcia urzędu, wywóz odpadów',
+  value,
+  defaultValue,
+  onChange,
+  onSubmit,
+  size = 'lg',
+  buttonLabel = 'Szukaj',
+  label = 'Szukaj informacji publicznej',
+  style
+}) {
+  const [focus, setFocus] = React.useState(false);
+  const [inner, setInner] = React.useState(defaultValue || '');
+  const val = value !== undefined ? value : inner;
+  const h = size === 'lg' ? 56 : 44;
+  return /*#__PURE__*/React.createElement("form", {
+    role: "search",
+    onSubmit: e => {
+      e.preventDefault();
+      onSubmit && onSubmit(val);
+    },
+    style: {
+      display: 'flex',
+      width: '100%',
+      borderRadius: 'var(--radius-md)',
+      boxShadow: focus ? 'var(--focus-ring)' : 'none',
+      ...style
+    }
+  }, /*#__PURE__*/React.createElement("label", {
+    style: {
+      position: 'relative',
+      flex: 1,
+      display: 'flex',
+      alignItems: 'center'
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      position: 'absolute',
+      width: 1,
+      height: 1,
+      overflow: 'hidden',
+      clip: 'rect(0 0 0 0)'
+    }
+  }, label), /*#__PURE__*/React.createElement(Icon, {
+    name: "search",
+    size: size === 'lg' ? 24 : 20,
+    color: "var(--fg-3)",
+    style: {
+      position: 'absolute',
+      left: 16,
+      pointerEvents: 'none'
+    }
+  }), /*#__PURE__*/React.createElement("input", {
+    type: "search",
+    value: val,
+    placeholder: placeholder,
+    onChange: e => {
+      setInner(e.target.value);
+      onChange && onChange(e.target.value);
+    },
+    onFocus: () => setFocus(true),
+    onBlur: () => setFocus(false),
+    style: {
+      width: '100%',
+      height: h,
+      boxSizing: 'border-box',
+      padding: size === 'lg' ? '0 16px 0 52px' : '0 12px 0 44px',
+      border: '2px solid var(--black)',
+      borderRight: 0,
+      borderRadius: 'var(--radius-md) 0 0 var(--radius-md)',
+      fontFamily: 'var(--font-body)',
+      fontSize: size === 'lg' ? 18 : 16,
+      color: 'var(--black)',
+      background: 'var(--white)',
+      outline: 'none'
+    }
+  })), /*#__PURE__*/React.createElement("button", {
+    type: "submit",
+    style: {
+      height: h,
+      padding: size === 'lg' ? '0 28px' : '0 18px',
+      border: 0,
+      borderRadius: '0 var(--radius-md) var(--radius-md) 0',
+      background: 'var(--black)',
+      color: 'var(--white)',
+      fontFamily: 'var(--font-body)',
+      fontWeight: 700,
+      fontSize: size === 'lg' ? 18 : 16,
+      cursor: 'pointer',
+      display: 'flex',
+      alignItems: 'center',
+      gap: 8
+    }
+  }, buttonLabel));
+}
+
+// components/forms/fieldParts.jsx
+function renderLabel(id, label, optional, required) {
+  if (!label) return null;
+  return /*#__PURE__*/React.createElement("label", {
+    htmlFor: id,
+    style: {
+      fontFamily: 'var(--font-body)',
+      fontWeight: 700,
+      fontSize: 16,
+      lineHeight: '24px',
+      color: 'var(--black)'
+    }
+  }, label, optional && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontWeight: 400,
+      color: 'var(--fg-3)'
+    }
+  }, " (opcjonalnie)"), required && /*#__PURE__*/React.createElement("span", {
+    "aria-hidden": "true",
+    style: {
+      color: 'var(--red-600)'
+    }
+  }, " *"));
+}
+function renderMessages(id, hint, error) {
+  return /*#__PURE__*/React.createElement(React.Fragment, null, hint && /*#__PURE__*/React.createElement("span", {
+    id: id + '-hint',
+    style: {
+      fontSize: 14,
+      lineHeight: '20px',
+      color: 'var(--fg-3)'
+    }
+  }, hint), error && /*#__PURE__*/React.createElement("span", {
+    id: id + '-error',
+    role: "alert",
+    style: {
+      display: 'flex',
+      gap: 6,
+      alignItems: 'flex-start',
+      fontSize: 14,
+      lineHeight: '20px',
+      fontWeight: 700,
+      color: 'var(--danger-fg)'
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "circle-alert",
+    size: 18,
+    style: {
+      marginTop: 1
+    }
+  }), error));
+}
+function controlStyle(focus, error, disabled) {
+  return {
+    width: '100%',
+    boxSizing: 'border-box',
+    fontFamily: 'var(--font-body)',
+    fontSize: 16,
+    lineHeight: '24px',
+    color: 'var(--black)',
+    background: disabled ? 'var(--gray-100)' : 'var(--white)',
+    border: error ? '2px solid var(--danger-fg)' : focus ? '1px solid var(--black)' : '1px solid var(--border-control)',
+    borderRadius: 'var(--radius-md)',
+    outline: 'none',
+    boxShadow: focus ? 'var(--focus-ring)' : 'none',
+    transition: 'box-shadow var(--dur-fast) var(--ease-standard)'
+  };
+}
+let fieldSeq = 0;
+function useFieldId(id) {
+  const ref = React.useRef(id || 'km-field-' + ++fieldSeq);
+  return ref.current;
+}
+
+// components/forms/Checkbox.jsx
+function Checkbox({
+  id,
+  label,
+  hint,
+  checked,
+  defaultChecked,
+  disabled,
+  onChange,
+  style,
+  ...rest
+}) {
+  const fid = useFieldId(id);
+  const controlled = checked !== undefined;
+  const [inner, setInner] = React.useState(!!defaultChecked);
+  const on = controlled ? checked : inner;
+  const [focus, setFocus] = React.useState(false);
+  return /*#__PURE__*/React.createElement("label", {
+    htmlFor: fid,
+    style: {
+      display: 'flex',
+      gap: 12,
+      alignItems: 'flex-start',
+      cursor: disabled ? 'not-allowed' : 'pointer',
+      opacity: disabled ? 0.5 : 1,
+      ...style
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      position: 'relative',
+      flex: 'none',
+      width: 24,
+      height: 24,
+      marginTop: 0,
+      borderRadius: 'var(--radius-sm)',
+      border: '2px solid ' + (on ? 'var(--red-600)' : 'var(--black)'),
+      background: on ? 'var(--red-600)' : 'var(--white)',
+      display: 'grid',
+      placeItems: 'center',
+      boxSizing: 'border-box',
+      boxShadow: focus ? 'var(--focus-ring)' : 'none'
+    }
+  }, /*#__PURE__*/React.createElement("input", _extends({
+    id: fid,
+    type: "checkbox",
+    checked: on,
+    disabled: disabled,
+    onChange: e => {
+      if (!controlled) setInner(e.target.checked);
+      onChange && onChange(e);
+    },
+    onFocus: () => setFocus(true),
+    onBlur: () => setFocus(false),
+    style: {
+      position: 'absolute',
+      inset: 0,
+      margin: 0,
+      opacity: 0,
+      cursor: 'inherit'
+    }
+  }, rest)), on && /*#__PURE__*/React.createElement(Icon, {
+    name: "check",
+    size: 16,
+    color: "var(--white)"
+  })), /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: 'flex',
+      flexDirection: 'column'
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 16,
+      lineHeight: '24px',
+      color: 'var(--black)'
+    }
+  }, label), hint && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 14,
+      lineHeight: '20px',
+      color: 'var(--fg-3)'
+    }
+  }, hint)));
+}
+
+// components/forms/Radio.jsx
+function Radio({
+  id,
+  name,
+  value,
+  label,
+  hint,
+  checked,
+  disabled,
+  onChange,
+  style,
+  ...rest
+}) {
+  const fid = useFieldId(id);
+  const [focus, setFocus] = React.useState(false);
+  return /*#__PURE__*/React.createElement("label", {
+    htmlFor: fid,
+    style: {
+      display: 'flex',
+      gap: 12,
+      alignItems: 'flex-start',
+      cursor: disabled ? 'not-allowed' : 'pointer',
+      opacity: disabled ? 0.5 : 1,
+      ...style
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      position: 'relative',
+      flex: 'none',
+      width: 24,
+      height: 24,
+      borderRadius: '50%',
+      border: '2px solid ' + (checked ? 'var(--red-600)' : 'var(--black)'),
+      background: 'var(--white)',
+      display: 'grid',
+      placeItems: 'center',
+      boxSizing: 'border-box',
+      boxShadow: focus ? 'var(--focus-ring)' : 'none'
+    }
+  }, /*#__PURE__*/React.createElement("input", _extends({
+    id: fid,
+    type: "radio",
+    name: name,
+    value: value,
+    checked: checked,
+    disabled: disabled,
+    onChange: onChange,
+    onFocus: () => setFocus(true),
+    onBlur: () => setFocus(false),
+    style: {
+      position: 'absolute',
+      inset: 0,
+      margin: 0,
+      opacity: 0,
+      cursor: 'inherit'
+    }
+  }, rest)), checked && /*#__PURE__*/React.createElement("span", {
+    style: {
+      width: 12,
+      height: 12,
+      borderRadius: '50%',
+      background: 'var(--red-600)'
+    }
+  })), /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: 'flex',
+      flexDirection: 'column'
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 16,
+      lineHeight: '24px',
+      color: 'var(--black)'
+    }
+  }, label), hint && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 14,
+      lineHeight: '20px',
+      color: 'var(--fg-3)'
+    }
+  }, hint)));
+}
+function RadioGroup({
+  name,
+  legend,
+  options = [],
+  value,
+  onChange,
+  direction = 'column',
+  style
+}) {
+  return /*#__PURE__*/React.createElement("fieldset", {
+    style: {
+      border: 0,
+      padding: 0,
+      margin: 0,
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 12,
+      ...style
+    }
+  }, legend && /*#__PURE__*/React.createElement("legend", {
+    style: {
+      fontWeight: 700,
+      fontSize: 16,
+      lineHeight: '24px',
+      padding: 0,
+      marginBottom: 12
+    }
+  }, legend), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      flexDirection: direction,
+      gap: direction === 'row' ? 24 : 12,
+      flexWrap: 'wrap'
+    }
+  }, options.map(o => /*#__PURE__*/React.createElement(Radio, {
+    key: o.value,
+    name: name,
+    value: o.value,
+    label: o.label,
+    hint: o.hint,
+    checked: value === o.value,
+    onChange: () => onChange && onChange(o.value)
+  }))));
+}
+
+// components/forms/Select.jsx
+function Select({
+  id,
+  label,
+  hint,
+  error,
+  optional,
+  required,
+  options = [],
+  placeholder,
+  value,
+  defaultValue,
+  disabled,
+  onChange,
+  style,
+  ...rest
+}) {
+  const fid = useFieldId(id);
+  const [focus, setFocus] = React.useState(false);
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 6,
+      ...style
+    }
+  }, renderLabel(fid, label, optional, required), renderMessages(fid, hint, null), /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: 'relative',
+      display: 'flex',
+      alignItems: 'center'
+    }
+  }, /*#__PURE__*/React.createElement("select", _extends({
+    id: fid,
+    value: value,
+    defaultValue: value === undefined ? defaultValue ?? (placeholder ? '' : undefined) : undefined,
+    disabled: disabled,
+    onChange: onChange,
+    onFocus: () => setFocus(true),
+    onBlur: () => setFocus(false),
+    style: {
+      ...controlStyle(focus, error, disabled),
+      height: 44,
+      padding: '0 40px 0 12px',
+      appearance: 'none',
+      WebkitAppearance: 'none',
+      cursor: 'pointer'
+    }
+  }, rest), placeholder && /*#__PURE__*/React.createElement("option", {
+    value: "",
+    disabled: true
+  }, placeholder), options.map(o => {
+    const opt = typeof o === 'string' ? {
+      value: o,
+      label: o
+    } : o;
+    return /*#__PURE__*/React.createElement("option", {
+      key: opt.value,
+      value: opt.value
+    }, opt.label);
+  })), /*#__PURE__*/React.createElement(Icon, {
+    name: "chevron-down",
+    size: 20,
+    style: {
+      position: 'absolute',
+      right: 12,
+      pointerEvents: 'none'
+    }
+  })), renderMessages(fid, null, error));
+}
+
+// components/forms/Switch.jsx
+function Switch({
+  id,
+  label,
+  checked,
+  defaultChecked,
+  disabled,
+  onChange,
+  style
+}) {
+  const fid = useFieldId(id);
+  const controlled = checked !== undefined;
+  const [inner, setInner] = React.useState(!!defaultChecked);
+  const on = controlled ? checked : inner;
+  const [focus, setFocus] = React.useState(false);
+  return /*#__PURE__*/React.createElement("label", {
+    htmlFor: fid,
+    style: {
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: 12,
+      cursor: disabled ? 'not-allowed' : 'pointer',
+      opacity: disabled ? 0.5 : 1,
+      ...style
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      position: 'relative',
+      flex: 'none',
+      width: 44,
+      height: 24,
+      borderRadius: 'var(--radius-pill)',
+      background: on ? 'var(--red-600)' : 'var(--gray-500)',
+      transition: 'background var(--dur-base) var(--ease-standard)',
+      boxShadow: focus ? 'var(--focus-ring)' : 'none'
+    }
+  }, /*#__PURE__*/React.createElement("input", {
+    id: fid,
+    type: "checkbox",
+    role: "switch",
+    checked: on,
+    disabled: disabled,
+    onChange: e => {
+      if (!controlled) setInner(e.target.checked);
+      onChange && onChange(e.target.checked);
+    },
+    onFocus: () => setFocus(true),
+    onBlur: () => setFocus(false),
+    style: {
+      position: 'absolute',
+      inset: 0,
+      margin: 0,
+      opacity: 0,
+      cursor: 'inherit'
+    }
+  }), /*#__PURE__*/React.createElement("span", {
+    style: {
+      position: 'absolute',
+      top: 3,
+      left: on ? 23 : 3,
+      width: 18,
+      height: 18,
+      borderRadius: '50%',
+      background: 'var(--white)',
+      transition: 'left var(--dur-base) var(--ease-standard)',
+      pointerEvents: 'none'
+    }
+  })), label && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 16,
+      lineHeight: '24px'
+    }
+  }, label));
+}
+
+// components/forms/TextField.jsx
+function TextField({
+  id,
+  label,
+  hint,
+  error,
+  optional,
+  required,
+  iconLeft,
+  type = 'text',
+  value,
+  defaultValue,
+  placeholder,
+  disabled,
+  onChange,
+  style,
+  inputStyle,
+  ...rest
+}) {
+  const fid = useFieldId(id);
+  const [focus, setFocus] = React.useState(false);
+  const cs = controlStyle(focus, error, disabled);
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 6,
+      ...style
+    }
+  }, renderLabel(fid, label, optional, required), renderMessages(fid, hint, null), /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: 'relative',
+      display: 'flex',
+      alignItems: 'center'
+    }
+  }, iconLeft && /*#__PURE__*/React.createElement(Icon, {
+    name: iconLeft,
+    size: 20,
+    color: "var(--fg-3)",
+    style: {
+      position: 'absolute',
+      left: 12,
+      pointerEvents: 'none'
+    }
+  }), /*#__PURE__*/React.createElement("input", _extends({
+    id: fid,
+    type: type,
+    value: value,
+    defaultValue: defaultValue,
+    placeholder: placeholder,
+    disabled: disabled,
+    required: required,
+    "aria-invalid": error ? true : undefined,
+    "aria-describedby": [hint && fid + '-hint', error && fid + '-error'].filter(Boolean).join(' ') || undefined,
+    onChange: onChange,
+    onFocus: () => setFocus(true),
+    onBlur: () => setFocus(false),
+    style: {
+      ...cs,
+      height: 44,
+      padding: iconLeft ? '0 12px 0 42px' : '0 12px',
+      ...inputStyle
+    }
+  }, rest))), renderMessages(fid, null, error));
+}
+
+// components/forms/Textarea.jsx
+function Textarea({
+  id,
+  label,
+  hint,
+  error,
+  optional,
+  required,
+  rows = 5,
+  maxLength,
+  value,
+  defaultValue,
+  placeholder,
+  disabled,
+  onChange,
+  style,
+  ...rest
+}) {
+  const fid = useFieldId(id);
+  const [focus, setFocus] = React.useState(false);
+  const [len, setLen] = React.useState((value ?? defaultValue ?? '').length);
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 6,
+      ...style
+    }
+  }, renderLabel(fid, label, optional, required), renderMessages(fid, hint, null), /*#__PURE__*/React.createElement("textarea", _extends({
+    id: fid,
+    rows: rows,
+    maxLength: maxLength,
+    value: value,
+    defaultValue: defaultValue,
+    placeholder: placeholder,
+    disabled: disabled,
+    "aria-invalid": error ? true : undefined,
+    onChange: e => {
+      setLen(e.target.value.length);
+      onChange && onChange(e);
+    },
+    onFocus: () => setFocus(true),
+    onBlur: () => setFocus(false),
+    style: {
+      ...controlStyle(focus, error, disabled),
+      padding: '10px 12px',
+      resize: 'vertical',
+      minHeight: 96
+    }
+  }, rest)), maxLength && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 14,
+      lineHeight: '20px',
+      color: len > maxLength * 0.9 ? 'var(--danger-fg)' : 'var(--fg-3)',
+      textAlign: 'right'
+    }
+  }, len, " / ", maxLength, " znak\xF3w"), renderMessages(fid, null, error));
+}
+
+// components/navigation/Breadcrumbs.jsx
+function Breadcrumbs({
+  items = [],
+  onNavigate,
+  style
+}) {
+  return /*#__PURE__*/React.createElement("nav", {
+    "aria-label": "\u015Acie\u017Cka nawigacji",
+    style: style
+  }, /*#__PURE__*/React.createElement("ol", {
+    style: {
+      display: 'flex',
+      flexWrap: 'wrap',
+      alignItems: 'center',
+      gap: 6,
+      margin: 0,
+      padding: 0,
+      listStyle: 'none',
+      fontSize: 14,
+      lineHeight: '20px'
+    }
+  }, items.map((it, i) => {
+    const last = i === items.length - 1;
+    return /*#__PURE__*/React.createElement("li", {
+      key: i,
+      style: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: 6
+      }
+    }, last ? /*#__PURE__*/React.createElement("span", {
+      "aria-current": "page",
+      style: {
+        color: 'var(--fg-2)'
+      }
+    }, it.label) : /*#__PURE__*/React.createElement("a", {
+      href: it.href || '#',
+      onClick: e => {
+        if (onNavigate) {
+          e.preventDefault();
+          onNavigate(it, i);
+        }
+      },
+      style: {
+        color: 'var(--black)'
+      }
+    }, it.label), !last && /*#__PURE__*/React.createElement(Icon, {
+      name: "chevron-right",
+      size: 16,
+      color: "var(--fg-3)"
+    }));
+  })));
+}
+
+// components/navigation/Pagination.jsx
+function Pagination({
+  page = 1,
+  pageCount = 1,
+  onChange,
+  style
+}) {
+  const pages = [];
+  for (let p = 1; p <= pageCount; p++) {
+    if (p === 1 || p === pageCount || Math.abs(p - page) <= 1) pages.push(p);else if (pages[pages.length - 1] !== '…') pages.push('…');
+  }
+  const btn = active => ({
+    minWidth: 44,
+    height: 44,
+    padding: '0 8px',
+    borderRadius: 'var(--radius-md)',
+    border: active ? '2px solid var(--black)' : '1px solid transparent',
+    background: active ? 'var(--black)' : 'transparent',
+    color: active ? 'var(--white)' : 'var(--black)',
+    fontFamily: 'var(--font-body)',
+    fontWeight: 700,
+    fontSize: 16,
+    cursor: 'pointer',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    boxSizing: 'border-box'
+  });
+  return /*#__PURE__*/React.createElement("nav", {
+    "aria-label": "Stronicowanie",
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 4,
+      ...style
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    disabled: page <= 1,
+    onClick: () => onChange && onChange(page - 1),
+    style: {
+      ...btn(false),
+      opacity: page <= 1 ? 0.4 : 1
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "chevron-left",
+    size: 20
+  }), "Poprzednia"), pages.map((p, i) => p === '…' ? /*#__PURE__*/React.createElement("span", {
+    key: 'e' + i,
+    style: {
+      minWidth: 32,
+      textAlign: 'center',
+      color: 'var(--fg-3)'
+    }
+  }, "\u2026") : /*#__PURE__*/React.createElement("button", {
+    key: p,
+    type: "button",
+    "aria-current": p === page ? 'page' : undefined,
+    onClick: () => onChange && onChange(p),
+    style: btn(p === page)
+  }, p)), /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    disabled: page >= pageCount,
+    onClick: () => onChange && onChange(page + 1),
+    style: {
+      ...btn(false),
+      opacity: page >= pageCount ? 0.4 : 1
+    }
+  }, "Nast\u0119pna", /*#__PURE__*/React.createElement(Icon, {
+    name: "chevron-right",
+    size: 20
+  })));
+}
+
+// components/navigation/Stepper.jsx
+function Stepper({
+  steps = [],
+  current = 0,
+  style
+}) {
+  return /*#__PURE__*/React.createElement("ol", {
+    "aria-label": "Kroki formularza",
+    style: {
+      display: 'flex',
+      gap: 8,
+      margin: 0,
+      padding: 0,
+      listStyle: 'none',
+      ...style
+    }
+  }, steps.map((label, i) => {
+    const done = i < current,
+      active = i === current;
+    return /*#__PURE__*/React.createElement("li", {
+      key: i,
+      "aria-current": active ? 'step' : undefined,
+      style: {
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 8,
+        minWidth: 0
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        height: 4,
+        borderRadius: 2,
+        background: done ? 'var(--black)' : active ? 'var(--red-600)' : 'var(--gray-200)'
+      }
+    }), /*#__PURE__*/React.createElement("span", {
+      style: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        minWidth: 0
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        flex: 'none',
+        width: 24,
+        height: 24,
+        borderRadius: '50%',
+        display: 'grid',
+        placeItems: 'center',
+        fontSize: 13,
+        fontWeight: 700,
+        background: done ? 'var(--black)' : active ? 'var(--red-600)' : 'var(--white)',
+        color: done || active ? 'var(--white)' : 'var(--fg-3)',
+        border: done || active ? 0 : '1px solid var(--gray-300)',
+        boxSizing: 'border-box'
+      }
+    }, done ? /*#__PURE__*/React.createElement(Icon, {
+      name: "check",
+      size: 14
+    }) : i + 1), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 14,
+        lineHeight: '20px',
+        fontWeight: active ? 700 : 400,
+        color: active || done ? 'var(--black)' : 'var(--fg-3)',
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis'
+      }
+    }, label)));
+  }));
+}
+
+// components/navigation/Tabs.jsx
+function Tabs({
+  tabs = [],
+  value,
+  onChange,
+  style
+}) {
+  return /*#__PURE__*/React.createElement("div", {
+    role: "tablist",
+    style: {
+      display: 'flex',
+      gap: 4,
+      borderBottom: '1px solid var(--border-default)',
+      overflowX: 'auto',
+      ...style
+    }
+  }, tabs.map(t => {
+    const tab = typeof t === 'string' ? {
+      value: t,
+      label: t
+    } : t;
+    const active = tab.value === value;
+    return /*#__PURE__*/React.createElement("button", {
+      key: tab.value,
+      role: "tab",
+      type: "button",
+      "aria-selected": active,
+      onClick: () => onChange && onChange(tab.value),
+      style: {
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 8,
+        height: 48,
+        padding: '0 16px',
+        marginBottom: -1,
+        border: 0,
+        borderBottom: '4px solid ' + (active ? 'var(--red-600)' : 'transparent'),
+        background: 'transparent',
+        color: active ? 'var(--black)' : 'var(--fg-2)',
+        fontFamily: 'var(--font-body)',
+        fontWeight: active ? 700 : 400,
+        fontSize: 16,
+        cursor: 'pointer',
+        whiteSpace: 'nowrap'
+      }
+    }, tab.label, tab.count !== undefined && /*#__PURE__*/React.createElement("span", {
+      style: {
+        minWidth: 20,
+        height: 20,
+        padding: '0 6px',
+        borderRadius: 'var(--radius-pill)',
+        background: active ? 'var(--black)' : 'var(--gray-200)',
+        color: active ? 'var(--white)' : 'var(--black)',
+        fontSize: 12,
+        fontWeight: 700,
+        display: 'inline-grid',
+        placeItems: 'center',
+        boxSizing: 'border-box'
+      }
+    }, tab.count));
+  }));
+}
+
+// components/surfaces/Card.jsx
+function Card({
+  eyebrow,
+  title,
+  icon,
+  children,
+  footer,
+  onClick,
+  href,
+  padding = 24,
+  tone = 'default',
+  style
+}) {
+  const [hover, setHover] = React.useState(false);
+  const interactive = !!(onClick || href);
+  const Tag = href ? 'a' : onClick ? 'button' : 'div';
+  const tones = {
+    default: 'var(--white)',
+    subtle: 'var(--bg-subtle)',
+    accent: 'var(--yellow-50)'
+  };
+  return /*#__PURE__*/React.createElement(Tag, {
+    href: href,
+    onClick: onClick,
+    type: Tag === 'button' ? 'button' : undefined,
+    onMouseEnter: () => setHover(true),
+    onMouseLeave: () => setHover(false),
+    style: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 12,
+      textAlign: 'left',
+      width: '100%',
+      boxSizing: 'border-box',
+      padding,
+      borderRadius: 'var(--radius-lg)',
+      background: tones[tone] || tones.default,
+      border: '1px solid ' + (interactive && hover ? 'var(--black)' : 'var(--border-subtle)'),
+      boxShadow: interactive && hover ? 'var(--shadow-md)' : 'none',
+      color: 'var(--black)',
+      textDecoration: 'none',
+      fontFamily: 'var(--font-body)',
+      cursor: interactive ? 'pointer' : 'default',
+      transition: 'box-shadow var(--dur-base) var(--ease-standard), border-color var(--dur-base) var(--ease-standard)',
+      ...style
+    }
+  }, icon && /*#__PURE__*/React.createElement("span", {
+    style: {
+      width: 48,
+      height: 48,
+      borderRadius: 'var(--radius-md)',
+      background: 'var(--red-50)',
+      color: 'var(--red-600)',
+      display: 'grid',
+      placeItems: 'center'
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: icon,
+    size: 24
+  })), eyebrow && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 12,
+      lineHeight: '16px',
+      fontWeight: 700,
+      letterSpacing: '0.08em',
+      textTransform: 'uppercase',
+      color: 'var(--fg-3)'
+    }
+  }, eyebrow), title && /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 8,
+      fontFamily: 'var(--font-display)',
+      fontWeight: 600,
+      fontSize: 20,
+      lineHeight: '28px',
+      letterSpacing: '-0.01em',
+      textDecoration: interactive && hover ? 'underline' : 'none',
+      textUnderlineOffset: 4
+    }
+  }, title, interactive && /*#__PURE__*/React.createElement(Icon, {
+    name: "arrow-right",
+    size: 20,
+    style: {
+      marginLeft: 'auto',
+      color: 'var(--red-600)',
+      transform: hover ? 'translateX(2px)' : 'none',
+      transition: 'transform var(--dur-base) var(--ease-standard)'
+    }
+  })), children && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 16,
+      lineHeight: '24px',
+      color: 'var(--fg-2)'
+    }
+  }, children), footer && /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 'auto',
+      paddingTop: 12,
+      borderTop: '1px solid var(--border-subtle)',
+      fontSize: 14,
+      lineHeight: '20px',
+      color: 'var(--fg-3)',
+      display: 'flex',
+      gap: 12,
+      alignItems: 'center',
+      flexWrap: 'wrap'
+    }
+  }, footer));
+}
+
+// components/surfaces/Tag.jsx
+function Tag({
+  children,
+  selected = false,
+  onClick,
+  onRemove,
+  icon,
+  style
+}) {
+  const [hover, setHover] = React.useState(false);
+  const interactive = !!onClick;
+  const Tag_ = interactive ? 'button' : 'span';
+  return /*#__PURE__*/React.createElement(Tag_, {
+    type: interactive ? 'button' : undefined,
+    "aria-pressed": interactive ? selected : undefined,
+    onClick: onClick,
+    onMouseEnter: () => setHover(true),
+    onMouseLeave: () => setHover(false),
+    style: {
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: 6,
+      height: 36,
+      padding: onRemove ? '0 6px 0 14px' : '0 14px',
+      borderRadius: 'var(--radius-pill)',
+      border: '1px solid ' + (selected ? 'var(--black)' : 'var(--gray-300)'),
+      background: selected ? 'var(--black)' : hover && interactive ? 'var(--gray-100)' : 'var(--white)',
+      color: selected ? 'var(--white)' : 'var(--black)',
+      fontFamily: 'var(--font-body)',
+      fontSize: 14,
+      fontWeight: selected ? 700 : 400,
+      cursor: interactive ? 'pointer' : 'default',
+      whiteSpace: 'nowrap',
+      boxSizing: 'border-box',
+      ...style
+    }
+  }, selected && interactive && /*#__PURE__*/React.createElement(Icon, {
+    name: "check",
+    size: 16
+  }), icon && !selected && /*#__PURE__*/React.createElement(Icon, {
+    name: icon,
+    size: 16
+  }), children, onRemove && /*#__PURE__*/React.createElement("span", {
+    role: "button",
+    "aria-label": "Usu\u0144",
+    onClick: e => {
+      e.stopPropagation();
+      onRemove();
+    },
+    style: {
+      width: 24,
+      height: 24,
+      borderRadius: '50%',
+      display: 'grid',
+      placeItems: 'center',
+      cursor: 'pointer'
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "x",
+    size: 14
+  })));
+}
+
+export { Icon, Button, IconButton, Logo, Alert, Badge, StatusBadge, Dialog, Toast, Tooltip, SearchField, renderLabel, renderMessages, controlStyle, useFieldId, Checkbox, Radio, RadioGroup, Select, Switch, TextField, Textarea, Breadcrumbs, Pagination, Stepper, Tabs, Card, Tag };

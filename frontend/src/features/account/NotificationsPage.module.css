@@ -1,0 +1,49 @@
+.list {
+  list-style: none;
+  padding: 0;
+  border-top: 1px solid var(--border-subtle);
+}
+.item {
+  border-bottom: 1px solid var(--border-subtle);
+}
+.button {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  font: inherit;
+  color: var(--black);
+  cursor: pointer;
+  padding: var(--space-4) var(--space-2);
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+}
+.button:hover {
+  background: var(--gray-50);
+}
+.dot {
+  width: 10px;
+  height: 10px;
+  flex: none;
+  border-radius: var(--radius-pill);
+  margin-top: 7px;
+  background: transparent;
+}
+.dotUnread {
+  background: var(--red-600);
+}
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  flex: 1;
+  min-width: 0;
+}
+.title {
+  line-height: 24px;
+  font-weight: var(--fw-regular);
+}
+.titleUnread {
+  font-weight: var(--fw-bold);
+}
