@@ -105,6 +105,8 @@ Drabina — zatrzymaj się na pierwszym szczeblu, który wystarcza:
 - Walidacja HTML (`required`, `type="email"`, `minLength`) + błędy z backendu wyświetlane przy polu.
 - Bez bibliotek formularzy, dopóki formularz nie ma >10 pól z zależnościami.
 
+- Dyktowanie (Whisper): pod polem tekstowym `<Dictation label onText={dictate(get, set, multi)} />` z `features/dictation` (`dictate = useInsertDictated()`). Tekst zawsze **dopisywany**, z toastem „Cofnij”; `big` dla głównego pola ekranu. Nigdy dla e-maila, hasła, URL-i, dat.
+
 ## 10. Testy
 
 - Logika w `lib/` i nietrywialne hooki: Vitest (dochodzi gdy pojawi się pierwsza taka logika).
