@@ -10,6 +10,8 @@ import java.util.concurrent.ConcurrentHashMap;
 class RateLimiter {
     private record Window(long minute, int count) {}
 
+    static final int MAX_KEYS = 10_000;
+
     private final int perMinute;
     private final Map<String, Window> windows = new ConcurrentHashMap<>();
 
@@ -19,7 +21,11 @@ class RateLimiter {
 
     boolean tryAcquire(String key, long nowMillis) {
         long minute = nowMillis / 60_000;
-        if (windows.size() > 10_000) windows.values().removeIf(w -> w.minute() < minute); // bound memory
+        if (windows.size() > MAX_KEYS) {
+            windows.values().removeIf(w -> w.minute() < minute); // drop stale windows
+            // still full within this minute (e.g. rotating IPv6 addresses): fail closed for new keys
+            if (windows.size() > MAX_KEYS && !windows.containsKey(key)) return false;
+        }
         Window w = windows.merge(key, new Window(minute, 1),
                 (old, fresh) -> old.minute() == minute ? new Window(minute, old.count() + 1) : fresh);
         return w.count() <= perMinute;
