@@ -12,6 +12,7 @@ import {
   Textarea,
 } from "../../components/ds";
 import { errorMessage, fieldErrors } from "../../lib/errors";
+import { safeUrl } from "../../lib/format";
 import { LABELS } from "../../lib/labels";
 import { go, loginHref } from "../../lib/router";
 import type { ScreenProps } from "../../screens";
@@ -41,7 +42,7 @@ export function NewIdeaPage({ route }: ScreenProps) {
   const [sending, setSending] = useState(false);
   const { data: resources } = useApi(() => api.resources().catch(() => []), []);
   const res = (resources ?? [])
-    .filter((x) => x.kind === "CANVAS" || x.kind === "BIBLIOTEKA")
+    .filter((x) => (x.kind === "CANVAS" || x.kind === "BIBLIOTEKA") && safeUrl(x.url))
     .slice(0, 3);
 
   const set = (k: keyof Form) => (e: { target: { value: string } }) =>
@@ -172,7 +173,7 @@ export function NewIdeaPage({ route }: ScreenProps) {
               {res.map((x) => (
                 <a
                   key={x.id}
-                  href={x.url}
+                  href={safeUrl(x.url)}
                   target="_blank"
                   rel="noopener"
                   className="icon-link"

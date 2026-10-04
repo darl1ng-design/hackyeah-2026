@@ -1,7 +1,7 @@
 import { api } from '../../api/client';
 import { Button, Card, Icon, StatusBadge } from '../../components/ds';
 import { PageState } from '../../components/PageState';
-import { reportNo, similarityLabel } from '../../lib/format';
+import { reportNo, safeUrl, similarityLabel } from '../../lib/format';
 import { LABELS, REPORT_BADGE } from '../../lib/labels';
 import { go } from '../../lib/router';
 import { useApi } from '../../api/useApi';
@@ -18,7 +18,7 @@ export function MatchResultPage({ route }: ScreenProps) {
         api.getMatch(id),
         api
           .resources()
-          .then((r) => r.filter((x) => x.kind === 'CANVAS' || x.kind === 'BIBLIOTEKA').slice(0, 3))
+          .then((r) => r.filter((x) => (x.kind === 'CANVAS' || x.kind === 'BIBLIOTEKA') && safeUrl(x.url)).slice(0, 3))
           .catch(() => []),
       ]),
     [id],
@@ -99,7 +99,7 @@ export function MatchResultPage({ route }: ScreenProps) {
           <div className={s.res}>
             <span className="overline">Przydatne materiały</span>
             {res.map((x) => (
-              <a key={x.id} href={x.url} target="_blank" rel="noopener" className="icon-link">
+              <a key={x.id} href={safeUrl(x.url)} target="_blank" rel="noopener" className="icon-link">
                 {x.name}
                 <Icon name="external-link" size={16} />
               </a>
