@@ -23,7 +23,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(TranscriptionController.class)
 @Import(SecurityConfig.class)
-@TestPropertySource(properties = "hub.transcription.per-minute=3")
+@TestPropertySource(properties = {"hub.transcription.per-minute=3", "hub.transcription.global-per-minute=100"})
 class TranscriptionApiTests {
     @Autowired MockMvc mvc;
     @MockitoBean TranscriptionService transcription;

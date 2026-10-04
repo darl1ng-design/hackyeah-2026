@@ -33,11 +33,16 @@ public class TranscriptionController {
 
     private final TranscriptionService transcription;
     private final RateLimiter limiter;
+    private final RateLimiter global;
 
+    // Public endpoint (guests dictate on the match form) spends GPU time: per-IP limit plus a
+    // global cap so rotating IPs can't exceed it; the LiteLLM key's own rpm limit backs both.
     public TranscriptionController(TranscriptionService transcription,
-                                   @Value("${hub.transcription.per-minute:10}") int perMinute) {
+                                   @Value("${hub.transcription.per-minute:10}") int perMinute,
+                                   @Value("${hub.transcription.global-per-minute:30}") int globalPerMinute) {
         this.transcription = transcription;
         this.limiter = new RateLimiter(perMinute);
+        this.global = new RateLimiter(globalPerMinute);
     }
 
     @GetMapping("/health")
@@ -59,7 +64,8 @@ public class TranscriptionController {
         String ext = EXT.get(type);
         if (ext == null)
             throw new ResponseStatusException(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "Nieobsługiwany format nagrania.");
-        if (!limiter.tryAcquire(request.getRemoteAddr(), System.currentTimeMillis()))
+        long now = System.currentTimeMillis();
+        if (!limiter.tryAcquire(request.getRemoteAddr(), now) || !global.tryAcquire("*", now))
             throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, "Za dużo nagrań. Spróbuj za minutę.");
         if (!transcription.available())
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Rozpoznawanie mowy jest niedostępne.");

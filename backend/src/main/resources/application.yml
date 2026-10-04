@@ -47,4 +47,5 @@ hub:
   transcription:
     model: ${WHISPER_MODEL:whisper-large-v3-turbo}
     per-minute: ${HUB_TRANSCRIBE_PER_MINUTE:10}
+    global-per-minute: ${HUB_TRANSCRIBE_GLOBAL_PER_MINUTE:30}
   seed-vectors: true
