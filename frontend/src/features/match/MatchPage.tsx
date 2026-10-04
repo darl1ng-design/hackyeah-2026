@@ -4,6 +4,7 @@ import { errorMessage, fieldErrors } from '../../lib/errors';
 import { go } from '../../lib/router';
 import { useSession } from '../../session';
 import { api } from '../../api/client';
+import { WithDictation } from '../dictation/WithDictation';
 import { saveMatchDesc } from './matchDesc';
 
 const EXAMPLES = [
@@ -60,17 +61,19 @@ export function MatchPage() {
             </Tag>
           ))}
         </div>
-        <Textarea
-          id="m-desc"
-          label="Opis problemu"
-          hint="Kogo dotyczy, gdzie i od kiedy. Np. „Seniorzy z naszej wsi nie mają jak dojechać do przychodni.”"
-          rows={6}
-          maxLength={2000}
-          value={desc}
-          onChange={(e) => setDesc(e.target.value)}
-          error={err}
-          required
-        />
+        <WithDictation value={desc} onChange={setDesc} label="Podyktuj opis problemu">
+            <Textarea
+            id="m-desc"
+            label="Opis problemu"
+            hint="Kogo dotyczy, gdzie i od kiedy. Np. „Seniorzy z naszej wsi nie mają jak dojechać do przychodni.”"
+            rows={6}
+            maxLength={2000}
+            value={desc}
+            onChange={(e) => setDesc(e.target.value)}
+            error={err}
+            required
+          />
+        </WithDictation>
         <Select
           id="m-region"
           label="Region"
