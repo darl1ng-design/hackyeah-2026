@@ -18,7 +18,9 @@ import { go, loginHref } from "../../lib/router";
 import type { ScreenProps } from "../../screens";
 import { useSession } from "../../session";
 import { loadMatchDesc } from "../match/matchDesc";
-import { WithDictation } from "../dictation/WithDictation";
+import { Dictation } from "../dictation/Dictation";
+import { useInsertDictated } from "../dictation/useInsertDictated";
+import { IdeaStory } from "./IdeaStory";
 import { AssistantChat } from "./AssistantChat";
 import s from "./NewIdeaPage.module.css";
 
@@ -49,6 +51,7 @@ export function NewIdeaPage({ route }: ScreenProps) {
   const set = (k: keyof Form) => (e: { target: { value: string } }) =>
     setF((p) => ({ ...p, [k]: e.target.value }));
   const setText = (k: keyof Form) => (v: string) => setF((p) => ({ ...p, [k]: v }));
+  const dictate = useInsertDictated();
   const errSummary = Object.values(errs).filter(Boolean).join(" ");
 
   async function submit(e: React.FormEvent) {
@@ -109,6 +112,7 @@ export function NewIdeaPage({ route }: ScreenProps) {
               Możesz go dowolnie zmienić.
             </Alert>
           )}
+          <IdeaStory form={f} setForm={setF} />
           {errSummary && (
             <Alert tone="danger" title="Popraw zaznaczone pola">
               {errSummary}
@@ -123,19 +127,19 @@ export function NewIdeaPage({ route }: ScreenProps) {
             onChange={set("title")}
             error={errs.title}
           />
-          <WithDictation value={f.essence} onChange={setText("essence")} label="Podyktuj istotę pomysłu">
-              <Textarea
-              id="i-essence"
-              label="Istota pomysłu"
-              optional
-              hint="Jedno–dwa zdania: problem → rozwiązanie → zmiana."
-              rows={3}
-              maxLength={4000}
-              value={f.essence}
-              onChange={set("essence")}
-              error={errs.essence}
-            />
-          </WithDictation>
+          <Dictation label="Tytuł pomysłu" onText={dictate(() => f.title, setText("title"))} />
+          <Textarea
+            id="i-essence"
+            label="Istota pomysłu"
+            optional
+            hint="Jedno–dwa zdania: problem → rozwiązanie → zmiana."
+            rows={3}
+            maxLength={4000}
+            value={f.essence}
+            onChange={set("essence")}
+            error={errs.essence}
+          />
+          <Dictation label="Istota pomysłu" onText={dictate(() => f.essence, setText("essence"), true)} />
           <TextField
             id="i-target"
             label="Grupa docelowa"
@@ -145,6 +149,7 @@ export function NewIdeaPage({ route }: ScreenProps) {
             onChange={set("targetGroup")}
             error={errs.targetGroup}
           />
+          <Dictation label="Grupa docelowa" onText={dictate(() => f.targetGroup, setText("targetGroup"))} />
           <RadioGroup
             name="stage"
             legend="Etap"
@@ -152,19 +157,18 @@ export function NewIdeaPage({ route }: ScreenProps) {
             value={f.stage}
             onChange={(v) => setF((p) => ({ ...p, stage: v as Stage }))}
           />
-          <WithDictation value={f.description} onChange={setText("description")} label="Podyktuj opis">
-              <Textarea
-              id="i-desc"
-              label="Opis"
-              optional
-              hint="Co konkretnie zrobisz, z kim i po czym poznasz, że działa."
-              rows={7}
-              maxLength={4000}
-              value={f.description}
-              onChange={set("description")}
-              error={errs.description}
-            />
-          </WithDictation>
+          <Textarea
+            id="i-desc"
+            label="Opis"
+            optional
+            hint="Co konkretnie zrobisz, z kim i po czym poznasz, że działa."
+            rows={7}
+            maxLength={4000}
+            value={f.description}
+            onChange={set("description")}
+            error={errs.description}
+          />
+          <Dictation label="Opis" onText={dictate(() => f.description, setText("description"), true)} />
           <div className="row">
             <Button type="submit" size="lg" iconRight="send" disabled={sending}>
               {sending ? "Wysyłamy…" : "Wyślij pomysł"}

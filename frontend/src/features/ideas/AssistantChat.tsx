@@ -4,8 +4,8 @@ import { api } from "../../api/client";
 import type { ChatMessage, IdeaRequest } from "../../api/types";
 import { Button, Icon, Tag, TextField } from "../../components/ds";
 import { useSession } from "../../session";
-import { DictationButton } from "../dictation/DictationButton";
-import { appendText } from "../dictation/useDictation";
+import { Dictation } from "../dictation/Dictation";
+import { useInsertDictated } from "../dictation/useInsertDictated";
 import s from "./NewIdeaPage.module.css";
 
 const STARTERS = [
@@ -20,6 +20,7 @@ export function AssistantChat({ ideaContext, onInsert }: Props) {
   const { showToast } = useSession();
   const [chat, setChat] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
+  const dictate = useInsertDictated();
   const [sending, setSending] = useState(false);
   const log = useRef<HTMLDivElement>(null);
 
@@ -118,7 +119,6 @@ export function AssistantChat({ ideaContext, onInsert }: Props) {
           onChange={(e) => setInput(e.target.value)}
           style={{ flex: 1, minWidth: 0 }}
         />
-        <DictationButton label="Podyktuj pytanie" onText={(t) => setInput((i) => appendText(i, t))} />
         <Button
           variant="secondary"
           iconLeft="send"
@@ -127,6 +127,9 @@ export function AssistantChat({ ideaContext, onInsert }: Props) {
         >
           Wyślij
         </Button>
+      </div>
+      <div className={s.chatMic}>
+        <Dictation label="Twoje pytanie" onText={dictate(() => input, setInput)} />
       </div>
     </aside>
   );
