@@ -15,6 +15,7 @@ import pl.hubmalopolski.hub.workflow.HubWorkflowDto;
 import java.time.Instant;
 import java.util.Map;
 
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -30,6 +31,34 @@ class MiddlemanApiTests {
     @Autowired MockMvc mvc;
     @MockitoBean MiddlemanService middleman;
     @MockitoBean AppUserRepository users;
+    @MockitoBean pl.hubmalopolski.hub.ai.IdeaStoryParser storyParser;
+
+    @Test
+    void guestCannotParseDictation() throws Exception {
+        mvc.perform(post("/api/v1/middleman/parse").with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"text\":\"GOPS Limanowa\"}"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void memberGetsDictationSplitIntoAdaptationFields() throws Exception {
+        when(storyParser.parseAdaptation(anyString())).thenReturn(new pl.hubmalopolski.hub.ai.IdeaStoryParser
+                .ParsedAdaptation("Klub sąsiedzki", "GOPS Limanowa", "Seniorzy", "Samotność.", "Mały budżet."));
+        mvc.perform(post("/api/v1/middleman/parse").with(user("member@example.org").roles("MEMBER"))
+                        .with(csrf()).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"text\":\"Chcemy klub sąsiedzki w GOPS Limanowa.\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.institution").value("GOPS Limanowa"))
+                .andExpect(jsonPath("$.innovation").value("Klub sąsiedzki"));
+    }
+
+    @Test
+    void parseReturns503WhenModelIsDown() throws Exception {
+        when(storyParser.parseAdaptation(anyString())).thenThrow(new IllegalStateException("down"));
+        mvc.perform(post("/api/v1/middleman/parse").with(user("member@example.org").roles("MEMBER"))
+                        .with(csrf()).contentType(MediaType.APPLICATION_JSON).content("{\"text\":\"x\"}"))
+                .andExpect(status().isServiceUnavailable());
+    }
 
     @Test
     void guestCannotGeneratePlan() throws Exception {

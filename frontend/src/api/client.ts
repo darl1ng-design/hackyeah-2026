@@ -214,6 +214,9 @@ export const api = {
 
   generateMiddlemanPlan: (body: { innovationId: number; institution: string; targetGroup: string; need: string; constraints?: string }) =>
     request<T.MiddlemanPlan>("POST", "/api/v1/middleman/plans", body),
+  parseMiddleman: (text: string) =>
+    request<{ innovation: string; institution: string; targetGroup: string; need: string; constraints: string }>(
+      "POST", "/api/v1/middleman/parse", { text }),
   myMiddlemanPlans: () => get<T.MiddlemanPlan[]>("/api/v1/middleman/plans"),
   middlemanPlan: (id: number) => get<T.MiddlemanPlan>(`/api/v1/middleman/plans/${id}`),
   staffMiddlemanPlans: () => get<T.MiddlemanPlan[]>("/api/v1/staff/middleman/plans"),

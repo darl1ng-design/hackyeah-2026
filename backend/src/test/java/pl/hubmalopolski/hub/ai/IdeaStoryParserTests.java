@@ -42,4 +42,20 @@ class IdeaStoryParserTests {
         assertThat(p.stage()).isEqualTo(IdeaStage.MYSL);
         assertThat(p.description()).isEqualTo("Mam pomysł na bus dla seniorów.");
     }
+
+    @Test
+    void adaptationFallsBackToStoryForNeedAndTrimsFields() {
+        ChatClient chat = mock(ChatClient.class, org.mockito.Answers.RETURNS_DEEP_STUBS);
+        when(chat.prompt().system(anyString()).user(anyString()).call()
+                .entity(eq(IdeaStoryParser.ParsedAdaptation.class), any()))
+                .thenReturn(new IdeaStoryParser.ParsedAdaptation(" Klub ", " GOPS ", null, " ", null));
+
+        var p = new IdeaStoryParser(chat).parseAdaptation("Chcemy klub w GOPS.");
+
+        assertThat(p.innovation()).isEqualTo("Klub");
+        assertThat(p.institution()).isEqualTo("GOPS");
+        assertThat(p.targetGroup()).isEmpty();
+        assertThat(p.need()).isEqualTo("Chcemy klub w GOPS.");
+        assertThat(p.constraints()).isEmpty();
+    }
 }
