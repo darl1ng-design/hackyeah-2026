@@ -1,0 +1,10 @@
+.field{position:relative}
+/* sits in the field's top-right label row, so it never covers typed text */
+.overlay{position:absolute;top:0;right:0}
+.wrap{display:inline-flex;align-items:center;gap:var(--space-2)}
+.status,.error{display:inline-flex;align-items:center;gap:6px;font-size:var(--fs-sm);color:var(--gray-700)}
+.error{color:var(--danger-fg);max-width:min(60vw,360px)}
+.dot{width:8px;height:8px;border-radius:var(--radius-pill);background:var(--red-600);animation:pulse 1s ease-in-out infinite}
+.cancel{font-size:var(--fs-sm)}
+@keyframes pulse{50%{opacity:.3}}
+@media (prefers-reduced-motion:reduce){.dot{animation:none}}
