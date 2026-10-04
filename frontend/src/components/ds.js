@@ -630,9 +630,8 @@ function Toast({
     success: 'var(--green-50)',
     danger: 'var(--red-200)'
   }[tone];
+  // App renders an always-mounted live region for the toast text; no role here (avoids double announce).
   return /*#__PURE__*/React.createElement("div", {
-    role: "status",
-    "aria-live": "polite",
     style: {
       display: 'flex',
       alignItems: 'center',

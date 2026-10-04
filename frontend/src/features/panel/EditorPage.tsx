@@ -12,6 +12,7 @@ import { useSession } from "../../session";
 import s from "./Panel.module.css";
 import { Dictation } from "../dictation/Dictation";
 import { useInsertDictated } from "../dictation/useInsertDictated";
+import { appendText } from "../dictation/useDictation";
 
 type InnForm = {
   title: string;
@@ -79,6 +80,32 @@ function EditorForm({ isInn, id, initial }: { isInn: boolean; id: number | null;
 
   const setField = (k: string) => (v: string) => setForm((f) => ({ ...f, [k]: v }));
   const dictate = useInsertDictated();
+  const [parsing, setParsing] = useState(false);
+
+  // One recording fills title, summary, target group and description (only empty fields; Undo in toast).
+  // ponytail: reuses the idea-story parser (essence → summary); a dedicated innovation prompt if it misfits.
+  async function parseStory(text: string) {
+    setParsing(true);
+    try {
+      const r = await api.parseIdea(text);
+      const prev = form;
+      setForm((f) => ({
+        ...f,
+        title: str("title") || r.title || "",
+        summary: str("summary") || r.essence || "",
+        targetGroup: str("targetGroup") || r.targetGroup || "",
+        description: appendText(str("description"), r.description || "", true),
+      }));
+      showToast("Uzupełniliśmy pola z nagrania. Sprawdź je przed zapisem.", "success", {
+        label: "Cofnij",
+        run: () => setForm(prev),
+      });
+    } catch {
+      showToast("Nie udało się rozłożyć nagrania na pola. Spróbuj ponownie albo wypełnij je ręcznie.", "danger");
+    } finally {
+      setParsing(false);
+    }
+  }
 
   const save = async () => {
     setSaving(true);
@@ -129,7 +156,24 @@ function EditorForm({ isInn, id, initial }: { isInn: boolean; id: number | null;
       <div className={`${s.card} ${s.formCard}`}>
         {isInn ? (
           <>
+            <section aria-labelledby="ed-story-title" className="stack">
+              <h2 id="ed-story-title" className="h3">Opowiedz o innowacji</h2>
+              <p className="small muted" id="ed-story-lead">
+                Jedno nagranie uzupełni tytuł, zajawkę, grupę docelową i opis. Wypełniamy tylko puste pola.
+              </p>
+              <Dictation
+                big
+                label="Opowieść o innowacji"
+                fieldId="ed-title"
+                bigLabel="Nagraj opis innowacji"
+                bigHint="Do 2 minut. Nagranie nie jest nigdzie zapisywane."
+                stopLabel="Zakończ i uzupełnij pola"
+                busyText={parsing ? "Układamy wypowiedź w polach formularza…" : undefined}
+                onText={parseStory}
+              />
+            </section>
             <TextField id="ed-title" label="Tytuł" required {...bind("title")} />
+            <Dictation label="Tytuł" fieldId="ed-title" onText={dictate(() => str("title"), setField("title"))} />
             <Textarea
               id="ed-summary"
               label="Zajawka"
@@ -139,10 +183,11 @@ function EditorForm({ isInn, id, initial }: { isInn: boolean; id: number | null;
               maxLength={1000}
               {...bind("summary")}
             />
-            <Dictation label="Zajawka" onText={dictate(() => str("summary"), setField("summary"), true)} />
+            <Dictation label="Zajawka" fieldId="ed-summary" onText={dictate(() => str("summary"), setField("summary"), true)} />
             <Textarea id="ed-desc" label="Pełny opis" optional rows={8} {...bind("description")} />
-            <Dictation label="Pełny opis" onText={dictate(() => str("description"), setField("description"), true)} />
+            <Dictation label="Pełny opis" fieldId="ed-desc" onText={dictate(() => str("description"), setField("description"), true)} />
             <TextField id="ed-target" label="Grupa docelowa" optional {...bind("targetGroup")} />
+            <Dictation label="Grupa docelowa" fieldId="ed-target" onText={dictate(() => str("targetGroup"), setField("targetGroup"))} />
             <div className={s.grid3}>
               <Select id="ed-status" label="Status" options={options(LABELS.innovationStatus)} {...bind("status")} />
               <Select
@@ -180,6 +225,7 @@ function EditorForm({ isInn, id, initial }: { isInn: boolean; id: number | null;
         ) : (
           <>
             <TextField id="ed-name" label="Nazwa" required {...bind("name")} />
+            <Dictation label="Nazwa" fieldId="ed-name" onText={dictate(() => str("name"), setField("name"))} />
             <TextField
               id="ed-url"
               label="Adres"

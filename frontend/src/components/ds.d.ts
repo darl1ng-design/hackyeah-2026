@@ -1,5 +1,5 @@
 // Types for the vendored design-system module ds.js (props mirror the DS component signatures).
-import type { CSSProperties, ReactNode } from "react";
+import type { CSSProperties, ReactNode, Ref } from "react";
 
 type Base = { style?: CSSProperties; children?: ReactNode };
 type Field = Base & {
@@ -41,6 +41,7 @@ export function Button(
     disabled?: boolean;
     type?: "button" | "submit";
     onClick?: () => void;
+    ref?: Ref<HTMLButtonElement>;
   },
 ): ReactNode;
 export function IconButton(

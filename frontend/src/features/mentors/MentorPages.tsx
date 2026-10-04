@@ -7,13 +7,26 @@ import { errorMessage } from "../../lib/errors";
 import { formatDateTime } from "../../lib/format";
 import { go } from "../../lib/router";
 import type { ScreenProps } from "../../screens";
+import { Dictation } from "../dictation/Dictation";
+import { useInsertDictated } from "../dictation/useInsertDictated";
 import s from "../panel/Panel.module.css";
+
+// Subject from the dictated message when the user left it empty: first sentence, max 120 chars.
+const subjectFrom = (text: string) => {
+  const first = text.trim().split(/(?<=[.!?])\s/)[0];
+  return first.length > 120 ? first.slice(0, 117).trimEnd() + "…" : first;
+};
 
 export function MentorHomePage() {
   const { data, error, loading } = useApi(() => api.myMentorConversations(), []);
   const [subject, setSubject] = useState(""); const [body, setBody] = useState("");
   const [errorText, setErrorText] = useState(""); const [busy, setBusy] = useState(false);
+  const dictate = useInsertDictated();
   if (!data) return <div className="container"><PageState loading={loading} error={error} /></div>;
+  const dictateBoth = (text: string) => {
+    if (!subject.trim()) setSubject(subjectFrom(text));
+    dictate(() => body, setBody, true)(text);
+  };
   async function open(event: FormEvent) {
     event.preventDefault(); setBusy(true); setErrorText("");
     try { const thread = await api.openMentorConversation(subject, body); go(`/mentorzy/${thread.id}`); }
@@ -24,8 +37,12 @@ export function MentorHomePage() {
     <header className="stack"><h1 className="h1">Porozmawiaj z ekspertem</h1><p className="lead">Zadaj pytanie zespołowi Hubu. Twoja rozmowa jest widoczna tylko dla Ciebie i pracowników.</p></header>
     <form className="box stack" style={{ padding: "var(--space-6)" }} onSubmit={open}>
       <h2 className="h3">Nowa rozmowa</h2>
+      <Dictation big label="Wiadomość do Hubu" fieldId="mentor-message" bigLabel="Powiedz, w czym możemy pomóc"
+        bigHint="Wpiszemy wiadomość, a pierwsze zdanie posłuży za temat, jeśli jest pusty. Wszystko możesz poprawić." onText={dictateBoth} />
       <TextField id="mentor-subject" label="Temat" required value={subject} onChange={(e) => setSubject(e.target.value)} />
+      <Dictation label="Temat" fieldId="mentor-subject" onText={dictate(() => subject, setSubject)} />
       <Textarea id="mentor-message" label="Wiadomość" required maxLength={4000} rows={5} value={body} onChange={(e) => setBody(e.target.value)} />
+      <Dictation label="Wiadomość" fieldId="mentor-message" onText={dictate(() => body, setBody, true)} />
       <p role="status" aria-live="polite">{busy ? "Wysyłam wiadomość…" : ""}</p>
       {errorText && <p role="alert">{errorText}</p>}
       <Button type="submit" disabled={busy}>{busy ? "Wysyłam…" : "Wyślij do Hubu"}</Button>
@@ -42,6 +59,7 @@ export function MentorHomePage() {
 export function MentorDetailPage({ route }: ScreenProps) {
   const id = Number(route.params.id); const { data, error, loading, reload } = useApi(() => api.mentorConversation(id), [id]);
   const [body, setBody] = useState(""); const [errorText, setErrorText] = useState(""); const [busy, setBusy] = useState(false);
+  const dictate = useInsertDictated();
   if (!data) return <div className="container"><PageState loading={loading} error={error} /></div>;
   async function send(event: FormEvent) {
     event.preventDefault(); setBusy(true); setErrorText("");
@@ -54,6 +72,7 @@ export function MentorDetailPage({ route }: ScreenProps) {
       <p><strong>{message.author}</strong> · {message.authorRole === "MEMBER" ? "Ty" : "Zespół Hubu"}</p><p className="prose">{message.body}</p><time className="small muted">{formatDateTime(message.createdAt)}</time>
     </li>)}</ol>
     {data.status === "OPEN" && <form className="stack" onSubmit={send}><Textarea id="mentor-reply" label="Twoja wiadomość" required maxLength={4000} rows={4} value={body} onChange={(e) => setBody(e.target.value)} />
+      <Dictation label="Twoja wiadomość" fieldId="mentor-reply" onText={dictate(() => body, setBody, true)} />
       <p role="status" aria-live="polite">{busy ? "Wysyłam wiadomość…" : ""}</p>{errorText && <p role="alert">{errorText}</p>}<Button type="submit" disabled={busy}>{busy ? "Wysyłam…" : "Wyślij odpowiedź"}</Button></form>}
   </div>;
 }
@@ -63,6 +82,7 @@ export function MentorQueuePage({ route }: ScreenProps) {
   const queue = useApi(() => api.staffMentorConversations(), []);
   const detail = useApi(() => selectedId ? api.staffMentorConversation(selectedId) : Promise.resolve(null), [selectedId]);
   const [body, setBody] = useState(""); const [errorText, setErrorText] = useState(""); const [busy, setBusy] = useState(false);
+  const dictate = useInsertDictated();
   if (!queue.data) return <PageState loading={queue.loading} error={queue.error} panel />;
   async function reply(event: FormEvent) {
     event.preventDefault(); setBusy(true); setErrorText("");
@@ -79,6 +99,7 @@ export function MentorQueuePage({ route }: ScreenProps) {
       <h2 id="selected-thread" className="h2">{detail.data.subject}</h2>
       <ol className="stack">{detail.data.messages.map((message) => <li key={message.id}><strong>{message.author}</strong> · {message.authorRole}<p className="prose">{message.body}</p></li>)}</ol>
       {detail.data.status === "OPEN" && <form className="stack" onSubmit={reply}><Textarea id="staff-reply" label="Odpowiedź" required rows={4} maxLength={4000} value={body} onChange={(e) => setBody(e.target.value)} />
+        <Dictation label="Odpowiedź" fieldId="staff-reply" onText={dictate(() => body, setBody, true)} />
         <p role="status" aria-live="polite">{busy ? "Wysyłam wiadomość…" : ""}</p>{errorText && <p role="alert">{errorText}</p>}<Button type="submit" disabled={busy}>{busy ? "Wysyłam…" : "Wyślij odpowiedź"}</Button></form>}
     </section> : <PageState loading={detail.loading} error={detail.error} panel />)}
   </div>;

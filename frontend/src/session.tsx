@@ -85,7 +85,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const showToast = useCallback((msg: string, tone: ToastTone = "neutral", action?: ToastAction) => {
     clearTimeout(timer.current);
     setToast({ msg, tone, action });
-    timer.current = window.setTimeout(() => setToast(null), 4500);
+    // WCAG 2.2.1: a toast with an action (Undo) stays until closed; keyboard users need time to reach it.
+    if (!action) timer.current = window.setTimeout(() => setToast(null), 4500);
   }, []);
 
   const logout = async () => {

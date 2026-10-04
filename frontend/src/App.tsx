@@ -70,6 +70,10 @@ function Shell() {
       ) : (
         <PublicLayout route={route}>{content}</PublicLayout>
       )}
+      {/* Always-mounted live region: screen readers miss regions that mount together with their text. */}
+      <div className="sr-only" role="status" aria-live="polite">
+        {toast ? toast.msg + (toast.action ? ` Przycisk ${toast.action.label} jest w powiadomieniu na dole strony.` : "") : ""}
+      </div>
       {toast && (
         <div className="toast-slot">
           <Toast
