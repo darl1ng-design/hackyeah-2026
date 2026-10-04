@@ -1,0 +1,48 @@
+/* Base from DS tokens/base.css + shared layout/typography classes used across features. */
+html {
+  -webkit-text-size-adjust: 100%;
+}
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--text-body);
+  background: var(--bg-page);
+  overflow-x: hidden;
+}
+a {
+  color: var(--fg-link);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+a:hover {
+  color: var(--fg-link-hover);
+  text-decoration-thickness: 2px;
+}
+a:focus-visible {
+  outline: none;
+  background: var(--yellow-500);
+  color: var(--black);
+  box-shadow: 0 3px 0 var(--black);
+  text-decoration: none;
+}
+:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+::selection {
+  background: var(--yellow-200);
+  color: var(--black);
+}
+h1,
+h2,
+h3,
+p,
+dl,
+dd,
+ul {
+  margin: 0;
+}
+
