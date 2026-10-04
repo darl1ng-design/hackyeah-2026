@@ -32,7 +32,7 @@ public class SecurityConfig {
                                 "/api/v1/matches/*", "/api/v1/ideas", "/api/v1/ideas/*",
                                 "/api/v1/transcribe/health").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/matches",
-                                "/api/v1/ideas/assistant", "/api/v1/register",
+                                "/api/v1/ideas/assistant", "/api/v1/ideas/assistant/parse", "/api/v1/register",
                                 "/api/v1/transcribe").permitAll()
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/v1/staff/**").hasAnyRole("STAFF", "ADMIN")

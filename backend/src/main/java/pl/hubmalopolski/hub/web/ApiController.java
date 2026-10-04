@@ -17,6 +17,7 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.transaction.annotation.Transactional;
 
 import pl.hubmalopolski.hub.ai.IdeaAssistant;
+import pl.hubmalopolski.hub.ai.IdeaStoryParser;
 import pl.hubmalopolski.hub.ai.IdeaAssistant.Turn;
 import pl.hubmalopolski.hub.ai.IdeaAssistant.IdeaContext;
 import pl.hubmalopolski.hub.catalog.InnovationFilters;
@@ -90,6 +91,8 @@ public class ApiController {
                                    List<@jakarta.validation.constraints.NotNull @jakarta.validation.Valid Turn> history,
                                    @jakarta.validation.Valid IdeaContext ideaContext) {}
     public record AssistantReply(String reply) {}
+    public record ParseIdeaRequest(@jakarta.validation.constraints.NotBlank
+                                   @jakarta.validation.constraints.Size(max = 6000) String text) {}
     public record MeDto(String username, List<String> roles) {}
     public record CsrfDto(String token, String headerName, String parameterName) {}
     public record RegionDto(Region code, String label) {}
@@ -110,18 +113,19 @@ public class ApiController {
     private final MatchReportService matchReports;
     private final ProblemClassifier classifier;
     private final IdeaAssistant assistant;
+    private final IdeaStoryParser storyParser;
     private final IdeaCommunicationService communication;
 
     public ApiController(InnovationRepository innovations, ChallengeAreaRepository areas,
                          ResourceRepository resources, IdeaRepository ideas,
                          AppUserRepository users,
                          ProblemReportRepository reports, MatchmakingService matchmaking,
-                         MatchReportService matchReports, ProblemClassifier classifier, IdeaAssistant assistant,
+                         MatchReportService matchReports, ProblemClassifier classifier, IdeaAssistant assistant, IdeaStoryParser storyParser,
                          IdeaCommunicationService communication) {
         this.innovations = innovations; this.areas = areas; this.resources = resources;
         this.ideas = ideas; this.users = users; this.reports = reports; this.matchmaking = matchmaking;
         this.matchReports = matchReports;
-        this.classifier = classifier; this.assistant = assistant;
+        this.classifier = classifier; this.assistant = assistant; this.storyParser = storyParser;
         this.communication = communication;
     }
 
@@ -328,6 +332,16 @@ public class ApiController {
             return new AssistantReply(assistant.coach(req.message(), req.history(), req.ideaContext()));
         } catch (Exception e) {
             return new AssistantReply("Asystent AI jest teraz niedostepny. Sprobuj pozniej.");
+        }
+    }
+
+    @PostMapping("/ideas/assistant/parse")
+    @SecurityRequirement(name = "csrfToken")
+    public IdeaStoryParser.ParsedIdea parseIdea(@RequestBody @jakarta.validation.Valid ParseIdeaRequest req) {
+        try {
+            return storyParser.parse(req.text());
+        } catch (RuntimeException e) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Asystent AI jest teraz niedostepny.");
         }
     }
 

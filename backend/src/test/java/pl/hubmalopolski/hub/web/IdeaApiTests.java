@@ -52,6 +52,7 @@ class IdeaApiTests {
     @MockitoBean MatchReportService matchReports;
     @MockitoBean ProblemClassifier classifier;
     @MockitoBean IdeaAssistant assistant;
+    @MockitoBean pl.hubmalopolski.hub.ai.IdeaStoryParser storyParser;
     @MockitoBean AppUserRepository users;
     @MockitoBean IdeaCommunicationService communication;
 
@@ -115,5 +116,21 @@ class IdeaApiTests {
                         .content("{\"status\":\"APPROVED\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.moderationStatus").value("APPROVED"));
+    }
+
+    @Test
+    void guestParsesDictatedStoryIntoIdeaFields() throws Exception {
+        when(storyParser.parse(any())).thenReturn(new pl.hubmalopolski.hub.ai.IdeaStoryParser.ParsedIdea(
+                "Bus na telefon", "Seniorzy nie dojeżdżają do lekarza.", "seniorzy",
+                pl.hubmalopolski.hub.domain.IdeaStage.MYSL, "Pełny opis."));
+        mvc.perform(post("/api/v1/ideas/assistant/parse").with(csrf())
+                        .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                        .content("{\"text\":\"Mam pomysł na bus na telefon dla seniorów.\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title").value("Bus na telefon"))
+                .andExpect(jsonPath("$.stage").value("MYSL"));
+        mvc.perform(post("/api/v1/ideas/assistant/parse").with(csrf())
+                        .contentType(org.springframework.http.MediaType.APPLICATION_JSON).content("{\"text\":\"\"}"))
+                .andExpect(status().isBadRequest());
     }
 }
