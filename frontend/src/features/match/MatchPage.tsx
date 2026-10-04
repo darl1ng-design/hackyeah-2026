@@ -4,7 +4,8 @@ import { errorMessage, fieldErrors } from '../../lib/errors';
 import { go } from '../../lib/router';
 import { useSession } from '../../session';
 import { api } from '../../api/client';
-import { WithDictation } from '../dictation/WithDictation';
+import { Dictation } from '../dictation/Dictation';
+import { useInsertDictated } from '../dictation/useInsertDictated';
 import { saveMatchDesc } from './matchDesc';
 
 const EXAMPLES = [
@@ -16,6 +17,7 @@ const EXAMPLES = [
 export function MatchPage() {
   const { regions, showToast } = useSession();
   const [desc, setDesc] = useState('');
+  const dictate = useInsertDictated();
   const [region, setRegion] = useState('');
   const [author, setAuthor] = useState('');
   const [err, setErr] = useState<string>();
@@ -61,19 +63,24 @@ export function MatchPage() {
             </Tag>
           ))}
         </div>
-        <WithDictation value={desc} onChange={setDesc} label="Podyktuj opis problemu">
-            <Textarea
-            id="m-desc"
-            label="Opis problemu"
-            hint="Kogo dotyczy, gdzie i od kiedy. Np. „Seniorzy z naszej wsi nie mają jak dojechać do przychodni.”"
-            rows={6}
-            maxLength={2000}
-            value={desc}
-            onChange={(e) => setDesc(e.target.value)}
-            error={err}
-            required
-          />
-        </WithDictation>
+        <Dictation
+          big
+          label="Opis problemu"
+          bigLabel="Powiedz, co się dzieje w Twojej okolicy"
+          bigHint="Albo wpisz poniżej. Tekst trafi do pola — przed wysłaniem możesz go poprawić."
+          onText={dictate(() => desc, setDesc, true)}
+        />
+        <Textarea
+          id="m-desc"
+          label="Opis problemu"
+          hint="Kogo dotyczy, gdzie i od kiedy. Np. „Seniorzy z naszej wsi nie mają jak dojechać do przychodni.”"
+          rows={6}
+          maxLength={2000}
+          value={desc}
+          onChange={(e) => setDesc(e.target.value)}
+          error={err}
+          required
+        />
         <Select
           id="m-region"
           label="Region"
