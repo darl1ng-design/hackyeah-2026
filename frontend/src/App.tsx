@@ -72,7 +72,16 @@ function Shell() {
       )}
       {toast && (
         <div className="toast-slot">
-          <Toast tone={toast.tone} message={toast.msg} onClose={closeToast} />
+          <Toast
+            tone={toast.tone}
+            message={toast.msg}
+            actionLabel={toast.action?.label}
+            onAction={() => {
+              toast.action?.run();
+              closeToast();
+            }}
+            onClose={closeToast}
+          />
         </div>
       )}
     </>

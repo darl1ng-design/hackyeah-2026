@@ -13,6 +13,7 @@ import { go } from "./lib/router";
 import type { Area, Me, Notification, Region, Role } from "./api/types";
 
 type ToastTone = "neutral" | "success" | "danger";
+type ToastAction = { label: string; run: () => void };
 
 type Session = {
   ready: boolean;
@@ -24,8 +25,8 @@ type Session = {
   setMe: (me: Me | null) => void;
   refreshNotifs: () => void;
   setNotifs: (n: Notification[]) => void;
-  toast: { msg: string; tone: ToastTone } | null;
-  showToast: (msg: string, tone?: ToastTone) => void;
+  toast: { msg: string; tone: ToastTone; action?: ToastAction } | null;
+  showToast: (msg: string, tone?: ToastTone, action?: ToastAction) => void;
   closeToast: () => void;
   reloadAreas: () => void;
   logout: () => Promise<void>;
@@ -74,9 +75,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     if (me) refreshNotifs();
   }, [me, refreshNotifs]);
 
-  const showToast = useCallback((msg: string, tone: ToastTone = "neutral") => {
+  const showToast = useCallback((msg: string, tone: ToastTone = "neutral", action?: ToastAction) => {
     clearTimeout(timer.current);
-    setToast({ msg, tone });
+    setToast({ msg, tone, action });
     timer.current = window.setTimeout(() => setToast(null), 4500);
   }, []);
 
