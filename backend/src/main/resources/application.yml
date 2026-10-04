@@ -11,6 +11,10 @@ spring:
     open-in-view: false
   flyway:
     enabled: true
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 11MB
   ai:
     openai:
       api-key: ${OPENAI_API_KEY:set-me}
@@ -23,6 +27,13 @@ spring:
         base-url: ${LLM_EMBED_BASE_URL:http://localhost:8081/v1}
         options:
           model: qwen3-embedding-0.6b
+      # Speech-to-text: LiteLLM gateway (api.skalujto.ai) -> faster-whisper on DGX-A.
+      audio:
+        transcription:
+          base-url: ${WHISPER_BASE_URL:https://api.skalujto.ai/v1}
+          api-key: ${WHISPER_API_KEY:set-me}
+          timeout: 120s
+          max-retries: 1
     vectorstore:
       pgvector:
         initialize-schema: true
@@ -33,4 +44,7 @@ spring:
         dimensions: 1024
 
 hub:
+  transcription:
+    model: ${WHISPER_MODEL:whisper-large-v3-turbo}
+    per-minute: ${HUB_TRANSCRIBE_PER_MINUTE:10}
   seed-vectors: true

@@ -29,9 +29,11 @@ public class SecurityConfig {
         http.authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.GET, "/api/v1/csrf", "/api/v1/innovations/**",
                                 "/api/v1/areas", "/api/v1/resources", "/api/v1/regions",
-                                "/api/v1/matches/*", "/api/v1/ideas", "/api/v1/ideas/*").permitAll()
+                                "/api/v1/matches/*", "/api/v1/ideas", "/api/v1/ideas/*",
+                                "/api/v1/transcribe/health").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/matches",
-                                "/api/v1/ideas/assistant", "/api/v1/register").permitAll()
+                                "/api/v1/ideas/assistant", "/api/v1/register",
+                                "/api/v1/transcribe").permitAll()
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/v1/staff/**").hasAnyRole("STAFF", "ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/v1/reports").hasAnyRole("STAFF", "ADMIN")
