@@ -11,6 +11,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import pl.hubmalopolski.hub.ai.IdeaAssistant;
 import pl.hubmalopolski.hub.ai.ProblemClassifier;
 import pl.hubmalopolski.hub.config.SecurityConfig;
+import pl.hubmalopolski.hub.communication.IdeaCommunicationService;
 import pl.hubmalopolski.hub.domain.AppUser;
 import pl.hubmalopolski.hub.domain.AppUserRole;
 import pl.hubmalopolski.hub.domain.Idea;
@@ -52,6 +53,7 @@ class IdeaApiTests {
     @MockitoBean ProblemClassifier classifier;
     @MockitoBean IdeaAssistant assistant;
     @MockitoBean AppUserRepository users;
+    @MockitoBean IdeaCommunicationService communication;
 
     @BeforeEach
     void saveReturnsIdea() {
@@ -59,10 +61,12 @@ class IdeaApiTests {
     }
 
     @Test
-    void guestCanCreatePendingIdeaWithAuthor() throws Exception {
-        mvc.perform(post("/api/v1/ideas").with(csrf())
+    void accountCanCreatePendingIdeaWithOwnerName() throws Exception {
+        AppUser owner = new AppUser("jan@example.org", "hash", "Jan", AppUserRole.MEMBER);
+        when(users.findByEmail("jan@example.org")).thenReturn(Optional.of(owner));
+        mvc.perform(post("/api/v1/ideas").with(user("jan@example.org").roles("MEMBER")).with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"title\":\"Pomysł\",\"author\":\"Jan\",\"stage\":\"MYSL\"}"))
+                        .content("{\"title\":\"Pomysł\",\"stage\":\"MYSL\"}"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.author").value("Jan"))
                 .andExpect(jsonPath("$.moderationStatus").value("PENDING"));

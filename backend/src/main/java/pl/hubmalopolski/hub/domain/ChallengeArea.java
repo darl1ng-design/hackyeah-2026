@@ -10,6 +10,7 @@ public class ChallengeArea {
     private Long id;
     @Column(nullable = false, unique = true)
     private String name;
+    @Column(length = 1000)
     private String description;
 
     protected ChallengeArea() {
@@ -31,4 +32,7 @@ public class ChallengeArea {
     public String getDescription() {
         return description;
     }
+
+    public void setName(String name) { this.name = name; }
+    public void setDescription(String description) { this.description = description; }
 }

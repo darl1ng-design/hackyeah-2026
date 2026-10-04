@@ -14,11 +14,13 @@ import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.transaction.annotation.Transactional;
 
 import pl.hubmalopolski.hub.ai.IdeaAssistant;
 import pl.hubmalopolski.hub.ai.IdeaAssistant.Turn;
 import pl.hubmalopolski.hub.ai.IdeaAssistant.IdeaContext;
 import pl.hubmalopolski.hub.catalog.InnovationFilters;
+import pl.hubmalopolski.hub.communication.IdeaCommunicationService;
 import pl.hubmalopolski.hub.domain.ChallengeArea;
 import pl.hubmalopolski.hub.domain.Idea;
 import pl.hubmalopolski.hub.domain.AppUser;
@@ -59,17 +61,20 @@ public class ApiController {
     public record AreaDto(Long id, String name, String description) {}
     public record InnovationDto(Long id, String title, String summary, String description,
                                 String targetGroup, InnovationStatus status, Region region,
-                                String videoUrl, String sourceUrl, AreaDto area, Instant createdAt) {}
-    public record InnovationRequest(@jakarta.validation.constraints.NotBlank String title,
+                                String videoUrl, String sourceUrl, AreaDto area, Instant createdAt,
+                                boolean published) {}
+    public record InnovationRequest(@jakarta.validation.constraints.NotBlank
+                                    @jakarta.validation.constraints.Size(max = 255) String title,
                                     String summary, String description, String targetGroup,
-                                    InnovationStatus status, Region region, String sourceUrl, Long areaId) {}
-    public record ResourceDto(Long id, String name, String url, ResourceKind kind) {}
+                                    InnovationStatus status, Region region, String sourceUrl, Long areaId,
+                                    Boolean published) {}
+    public record ResourceDto(Long id, String name, String url, ResourceKind kind, boolean published) {}
     public record IdeaDto(Long id, String title, String essence, String targetGroup,
                           IdeaStage stage, String description, String author,
                           IdeaModerationStatus moderationStatus, Instant createdAt) {}
-    public record IdeaRequest(@jakarta.validation.constraints.NotBlank String title,
-                              String essence, String targetGroup, IdeaStage stage, String description,
-                              @jakarta.validation.constraints.Size(max = 255) String author) {}
+    public record IdeaRequest(@jakarta.validation.constraints.NotBlank
+                              @jakarta.validation.constraints.Size(max = 255) String title,
+                              String essence, String targetGroup, IdeaStage stage, String description) {}
     public record ModerationRequest(@jakarta.validation.constraints.NotNull IdeaModerationStatus status) {}
     public record MatchRequest(@jakarta.validation.constraints.NotBlank String description,
                                Region region, String authorName) {}
@@ -105,16 +110,19 @@ public class ApiController {
     private final MatchReportService matchReports;
     private final ProblemClassifier classifier;
     private final IdeaAssistant assistant;
+    private final IdeaCommunicationService communication;
 
     public ApiController(InnovationRepository innovations, ChallengeAreaRepository areas,
                          ResourceRepository resources, IdeaRepository ideas,
                          AppUserRepository users,
                          ProblemReportRepository reports, MatchmakingService matchmaking,
-                         MatchReportService matchReports, ProblemClassifier classifier, IdeaAssistant assistant) {
+                         MatchReportService matchReports, ProblemClassifier classifier, IdeaAssistant assistant,
+                         IdeaCommunicationService communication) {
         this.innovations = innovations; this.areas = areas; this.resources = resources;
         this.ideas = ideas; this.users = users; this.reports = reports; this.matchmaking = matchmaking;
         this.matchReports = matchReports;
         this.classifier = classifier; this.assistant = assistant;
+        this.communication = communication;
     }
 
     // ---- biblioteka / wiedza ----
@@ -160,6 +168,7 @@ public class ApiController {
     @GetMapping("/innovations/{id}")
     public ResponseEntity<InnovationDto> getInnovation(@PathVariable Long id) {
         return innovations.findById(id)
+                .filter(Innovation::isPublished)
                 .map(i -> ResponseEntity.ok(toDto(i)))
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
@@ -177,8 +186,8 @@ public class ApiController {
 
     @GetMapping("/resources")
     public List<ResourceDto> listResources() {
-        return resources.findAll().stream()
-                .map(r -> new ResourceDto(r.getId(), r.getName(), r.getUrl(), r.getKind())).toList();
+        return resources.findByPublishedTrueOrderByNameAsc().stream()
+                .map(ApiController::toDto).toList();
     }
 
     // ---- matchmaking (modul I) ----
@@ -205,7 +214,8 @@ public class ApiController {
         public ResponseEntity<MatchResponse> getMatch(@PathVariable Long reportId) {
             return matchReports.find(reportId).map(saved -> ResponseEntity.ok(new MatchResponse(
                     saved.report().getId(), saved.report().getStatus(), toDto(saved.report().getArea()),
-                    saved.matches().stream().map(entry -> new MatchItemDto(
+                    saved.matches().stream().filter(entry -> entry.getInnovation().isPublished())
+                            .map(entry -> new MatchItemDto(
                             toDto(entry.getInnovation()), entry.getWhy(), entry.getSimilarity())).toList())))
                     .orElseGet(() -> ResponseEntity.notFound().build());
         }
@@ -229,9 +239,13 @@ public class ApiController {
                     req.targetGroup(), req.status() != null ? req.status() : InnovationStatus.ROZWOJ,
                     req.region(), null);
             in.setSourceUrl(req.sourceUrl());
+            in.setPublished(Boolean.TRUE.equals(req.published()));
             if (req.areaId() != null) in.setArea(areas.findById(req.areaId()).orElse(null));
             innovations.save(in);
-            try { matchmaking.index(in); innovations.save(in); } catch (Exception ignored) {}
+            if (in.isPublished()) {
+                try { matchmaking.index(in); innovations.save(in); }
+                catch (Exception ignored) { /* SeedRunner ponowi indeksowanie po starcie. */ }
+            }
             return ResponseEntity.status(HttpStatus.CREATED).body(toDto(in));
         }
 
@@ -275,15 +289,16 @@ public class ApiController {
     }
 
     @PostMapping("/ideas")
-    @SecurityRequirement(name = "csrfToken")
+    @SecurityRequirement(name = "cookieAuth")
+    @Parameter(name = "X-CSRF-TOKEN", in = ParameterIn.HEADER, required = true)
+    @Transactional
     public ResponseEntity<IdeaDto> createIdea(@RequestBody @jakarta.validation.Valid IdeaRequest req,
                                              Authentication authentication) {
-        String email = currentEmail(authentication);
-        AppUser owner = email == null ? null : users.findByEmail(email).orElse(null);
-        String author = owner != null ? owner.getDisplayName()
-                : req.author() == null || req.author().isBlank() ? "Anonim" : req.author().trim();
+        AppUser owner = users.findByEmail(authentication.getName())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
         Idea saved = ideas.save(new Idea(req.title(), req.essence(), req.targetGroup(),
-                req.stage(), req.description(), author, owner));
+                req.stage(), req.description(), owner.getDisplayName(), owner));
+        communication.onIdeaSubmitted(saved);
         return ResponseEntity.status(HttpStatus.CREATED).body(toDto(saved));
     }
 
@@ -321,7 +336,11 @@ public class ApiController {
     static InnovationDto toDto(Innovation i) {
         return new InnovationDto(i.getId(), i.getTitle(), i.getSummary(), i.getDescription(),
                 i.getTargetGroup(), i.getStatus(), i.getRegion(), i.getVideoUrl(),
-                i.getSourceUrl(), toDto(i.getArea()), i.getCreatedAt());
+                i.getSourceUrl(), toDto(i.getArea()), i.getCreatedAt(), i.isPublished());
+    }
+
+    static ResourceDto toDto(Resource r) {
+        return new ResourceDto(r.getId(), r.getName(), r.getUrl(), r.getKind(), r.isPublished());
     }
 
     static AreaDto toDto(ChallengeArea a) {

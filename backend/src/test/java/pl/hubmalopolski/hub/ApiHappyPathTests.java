@@ -33,6 +33,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -152,28 +153,22 @@ class ApiHappyPathTests {
     }
 
     @Test
-    void guestCanSubmitIdeaWithoutCreatingAccount() throws Exception {
+    void guestCanAskForHelpButCannotSubmitIdeaWithoutAccount() throws Exception {
         SessionCsrf guest = csrf();
-        MvcResult created = mvc.perform(post("/api/v1/ideas").session(guest.session())
+        mvc.perform(post("/api/v1/ideas").session(guest.session())
                         .header("X-CSRF-TOKEN", guest.token()).contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"title\":\"Ławka sąsiedzka\",\"author\":\"Mieszkanka\"}"))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.author").value("Mieszkanka"))
-                .andExpect(jsonPath("$.moderationStatus").value("PENDING"))
-                .andReturn();
-        long ideaId = ((Number) JsonPath.read(created.getResponse().getContentAsString(), "$.id"))
-                .longValue();
-        mvc.perform(get("/api/v1/ideas/{id}", ideaId))
-                .andExpect(status().isNotFound());
-        MockHttpSession admin = login("admin-guest-idea@example.org", AppUserRole.ADMIN);
-        mvc.perform(get("/api/v1/admin/ideas").session(admin))
-                .andExpect(jsonPath("$[?(@.id == " + ideaId + ")].author").value("Mieszkanka"));
+                        .content("{\"title\":\"Ławka sąsiedzka\"}"))
+                .andExpect(status().isUnauthorized());
+        mvc.perform(post("/api/v1/ideas/assistant").session(guest.session())
+                        .header("X-CSRF-TOKEN", guest.token()).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"message\":\"Jak zbudować ławkę?\"}"))
+                .andExpect(status().isOk());
     }
 
     @Test
     void adminCanAddInnovationAndPublicCanFilterKnowledgeResources() throws Exception {
         ChallengeArea area = areas.save(new ChallengeArea("Wykluczenie cyfrowe", "Wsparcie cyfrowe"));
-        jdbc.update("insert into resource (name, url, kind) values (?, ?, ?)",
+        jdbc.update("insert into resource (name, url, kind, published) values (?, ?, ?, true)",
                 "Canvas innowacji", "https://example.org/canvas", "CANVAS");
         MockHttpSession admin = login("admin-catalog-happy@example.org", AppUserRole.ADMIN);
         SessionCsrf adminCsrf = csrf(admin);
@@ -182,7 +177,7 @@ class ApiHappyPathTests {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"title\":\"Cyfrowy sąsiad\",\"summary\":\"Nauka telefonu\","
                                 + "\"region\":\"MALOPOLSKA\",\"status\":\"ROZWOJ\",\"areaId\":"
-                                + area.getId() + "}"))
+                                + area.getId() + ",\"published\":true}"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.area.name").value("Wykluczenie cyfrowe"))
                 .andReturn();
@@ -217,6 +212,110 @@ class ApiHappyPathTests {
                                 + "\"content\":\"Opisz odbiorców\"}],\"ideaContext\":{\"title\":\"Telefon\"}}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.reply").value("Zapytaj seniorów o potrzeby."));
+    }
+
+    @Test
+    void adminCanEditKnowledgeAndControlPublicVisibility() throws Exception {
+        MockHttpSession admin = login("admin-knowledge-happy@example.org", AppUserRole.ADMIN);
+        SessionCsrf token = csrf(admin);
+        MvcResult areaResult = mvc.perform(post("/api/v1/admin/areas").session(token.session())
+                        .header("X-CSRF-TOKEN", token.token()).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Zdrowie psychiczne\",\"description\":\"Wsparcie\"}"))
+                .andExpect(status().isCreated()).andReturn();
+        long areaId = ((Number) JsonPath.read(areaResult.getResponse().getContentAsString(), "$.id")).longValue();
+        mvc.perform(put("/api/v1/admin/areas/{id}", areaId).session(token.session())
+                        .header("X-CSRF-TOKEN", token.token()).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Dobrostan psychiczny\",\"description\":\"Nowy opis\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Dobrostan psychiczny"));
+
+        MvcResult resourceResult = mvc.perform(post("/api/v1/admin/resources").session(token.session())
+                        .header("X-CSRF-TOKEN", token.token()).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Poradnik testowy\",\"url\":\"https://example.org/one\","
+                                + "\"kind\":\"PUBLIKACJE\",\"published\":false}"))
+                .andExpect(status().isCreated()).andReturn();
+        long resourceId = ((Number) JsonPath.read(resourceResult.getResponse().getContentAsString(), "$.id"))
+                .longValue();
+        mvc.perform(get("/api/v1/resources"))
+                .andExpect(jsonPath("$[?(@.id == " + resourceId + ")]").isEmpty());
+        mvc.perform(put("/api/v1/admin/resources/{id}", resourceId).session(token.session())
+                        .header("X-CSRF-TOKEN", token.token()).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Poradnik opublikowany\",\"url\":\"https://example.org/two\","
+                                + "\"kind\":\"PUBLIKACJE\",\"published\":true}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.published").value(true));
+        mvc.perform(get("/api/v1/resources"))
+                .andExpect(jsonPath("$[?(@.id == " + resourceId + ")].name")
+                        .value("Poradnik opublikowany"));
+
+        MvcResult innovationResult = mvc.perform(post("/api/v1/admin/innovations")
+                        .session(token.session()).header("X-CSRF-TOKEN", token.token())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\":\"Testowa innowacja\",\"status\":\"ROZWOJ\",\"areaId\":"
+                                + areaId + "}"))
+                .andExpect(status().isCreated()).andReturn();
+        long innovationId = ((Number) JsonPath.read(innovationResult.getResponse().getContentAsString(), "$.id"))
+                .longValue();
+        mvc.perform(get("/api/v1/innovations/{id}", innovationId)).andExpect(status().isNotFound());
+        mvc.perform(put("/api/v1/admin/innovations/{id}", innovationId).session(token.session())
+                        .header("X-CSRF-TOKEN", token.token()).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\":\"Innowacja robocza\",\"status\":\"TESTOWANA\","
+                                + "\"published\":false,\"areaId\":" + areaId + "}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.published").value(false));
+        mvc.perform(get("/api/v1/innovations/{id}", innovationId)).andExpect(status().isNotFound());
+        mvc.perform(get("/api/v1/admin/innovations").session(admin))
+                .andExpect(jsonPath("$.content[?(@.id == " + innovationId + ")].published").value(false));
+        mvc.perform(put("/api/v1/admin/innovations/{id}", innovationId).session(token.session())
+                        .header("X-CSRF-TOKEN", token.token()).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\":\"Innowacja gotowa\",\"status\":\"WDROZONA\","
+                                + "\"published\":true,\"areaId\":" + areaId + "}"))
+                .andExpect(status().isOk());
+        mvc.perform(get("/api/v1/innovations/{id}", innovationId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title").value("Innowacja gotowa"));
+    }
+
+    @Test
+    void staffReceivesNewIdeaAndAuthorReceivesReply() throws Exception {
+        MockHttpSession staff = login("staff-idea-flow@example.org", AppUserRole.STAFF);
+        MockHttpSession author = login("author-idea-flow@example.org", AppUserRole.MEMBER);
+        MockHttpSession stranger = login("stranger-idea-flow@example.org", AppUserRole.MEMBER);
+        SessionCsrf authorToken = csrf(author);
+        MvcResult created = mvc.perform(post("/api/v1/ideas").session(authorToken.session())
+                        .header("X-CSRF-TOKEN", authorToken.token()).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\":\"Ogród sąsiedzki\",\"stage\":\"MYSL\"}"))
+                .andExpect(status().isCreated()).andReturn();
+        long ideaId = ((Number) JsonPath.read(created.getResponse().getContentAsString(), "$.id")).longValue();
+
+        mvc.perform(get("/api/v1/notifications").session(staff))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.ideaId == " + ideaId + ")].kind").value("NEW_IDEA"));
+        mvc.perform(get("/api/v1/staff/ideas").session(staff))
+                .andExpect(jsonPath("$[?(@.id == " + ideaId + ")].title").value("Ogród sąsiedzki"));
+
+        SessionCsrf staffToken = csrf(staff);
+        mvc.perform(post("/api/v1/staff/ideas/{id}/replies", ideaId).session(staffToken.session())
+                        .header("X-CSRF-TOKEN", staffToken.token()).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"body\":\"Zapraszamy na konsultację.\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.body").value("Zapraszamy na konsultację."));
+        MvcResult authorNotifications = mvc.perform(get("/api/v1/notifications").session(author))
+                .andExpect(jsonPath("$[?(@.ideaId == " + ideaId + ")].kind").value("IDEA_REPLY"))
+                .andReturn();
+        long notificationId = ((Number) JsonPath.read(
+                authorNotifications.getResponse().getContentAsString(), "$[0].id")).longValue();
+        mvc.perform(patch("/api/v1/notifications/{id}/read", notificationId)
+                        .session(authorToken.session()).header("X-CSRF-TOKEN", authorToken.token()))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.read").value(true));
+        SessionCsrf strangerToken = csrf(stranger);
+        mvc.perform(patch("/api/v1/notifications/{id}/read", notificationId)
+                        .session(strangerToken.session()).header("X-CSRF-TOKEN", strangerToken.token()))
+                .andExpect(status().isNotFound());
+        mvc.perform(get("/api/v1/ideas/{id}/replies", ideaId).session(author))
+                .andExpect(jsonPath("$[0].body").value("Zapraszamy na konsultację."));
+        mvc.perform(get("/api/v1/ideas/{id}/replies", ideaId).session(stranger))
+                .andExpect(status().isNotFound());
     }
 
     private MockHttpSession login(String email, AppUserRole role) throws Exception {

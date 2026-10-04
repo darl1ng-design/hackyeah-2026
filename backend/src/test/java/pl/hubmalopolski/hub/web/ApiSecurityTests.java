@@ -12,6 +12,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import pl.hubmalopolski.hub.ai.IdeaAssistant;
 import pl.hubmalopolski.hub.ai.ProblemClassifier;
 import pl.hubmalopolski.hub.config.SecurityConfig;
+import pl.hubmalopolski.hub.communication.IdeaCommunicationService;
 import pl.hubmalopolski.hub.match.MatchmakingService;
 import pl.hubmalopolski.hub.match.MatchReportService;
 import pl.hubmalopolski.hub.repo.ChallengeAreaRepository;
@@ -44,6 +45,7 @@ class ApiSecurityTests {
     @MockitoBean ProblemClassifier classifier;
     @MockitoBean IdeaAssistant assistant;
     @MockitoBean AppUserRepository users;
+    @MockitoBean IdeaCommunicationService communication;
 
     @BeforeEach
     void stubIdeaSave() {
@@ -65,11 +67,11 @@ class ApiSecurityTests {
     }
 
     @Test
-    void anonymousUserCanCreateIdeaWithCsrf() throws Exception {
+    void anonymousUserCannotCreateIdeaEvenWithCsrf() throws Exception {
         mvc.perform(post("/api/v1/ideas").with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"title\":\"Pomysł\"}"))
-                .andExpect(status().isCreated());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test

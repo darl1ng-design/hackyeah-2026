@@ -3,13 +3,17 @@ info:
   title: Hub Innowacji Spolecznych API
   description: |-
     REST API dla mieszkańców, pracowników i administratora.
-    Publiczne: katalog, regiony, zatwierdzone pomysły, utworzenie pomysłu,
-    dopasowanie i asystent. Konto mieszkańca jest opcjonalne i daje dostęp
+    Publiczne: katalog, regiony, zatwierdzone pomysły, dopasowanie i asystent.
+    Konto mieszkańca jest wymagane do zgłoszenia nowego pomysłu i daje dostęp
     do /api/v1/ideas?mine=true. /api/v1/me oraz raporty pracownicze wymagają
-    sesji; /api/v1/admin/** wymaga roli ADMIN.
+    sesji; /api/v1/admin/** wymaga roli ADMIN, a /api/v1/staff/**
+    roli STAFF lub ADMIN. Zgłoszenie pomysłu powiadamia pracowników;
+    zalogowany autor może odczytać odpowiedzi przez /api/v1/ideas/{id}/replies
+    oraz /api/v1/notifications. Trendy są w /api/v1/admin/trends;
+    administrator może edytować i publikować wiedzę.
     Rejestracja: POST /api/v1/register. Logowanie: POST /login jako formularz
     username (adres e-mail), password, _csrf; odpowiedź ustawia JSESSIONID.
-    Przed POST/PATCH pobierz GET /api/v1/csrf i wyślij token w nagłówku
+    Przed POST/PUT/PATCH pobierz GET /api/v1/csrf i wyślij token w nagłówku
     X-CSRF-TOKEN. Po logowaniu pobierz token ponownie. W fetch użyj
     credentials: 'include'.
   version: v1
@@ -17,6 +21,166 @@ servers:
 - url: http://localhost
   description: Generated server url
 paths:
+  /api/v1/admin/resources/{id}:
+    get:
+      tags:
+      - knowledge-admin-controller
+      operationId: getResource
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ResourceDto"
+      security:
+      - cookieAuth: []
+    put:
+      tags:
+      - knowledge-admin-controller
+      operationId: updateResource
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: X-CSRF-TOKEN
+        in: header
+        required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResourceUpdate"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ResourceDto"
+      security:
+      - cookieAuth: []
+  /api/v1/admin/innovations/{id}:
+    get:
+      tags:
+      - knowledge-admin-controller
+      operationId: getInnovation
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/InnovationDto"
+      security:
+      - cookieAuth: []
+    put:
+      tags:
+      - knowledge-admin-controller
+      operationId: updateInnovation
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: X-CSRF-TOKEN
+        in: header
+        required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InnovationUpdate"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/InnovationDto"
+      security:
+      - cookieAuth: []
+  /api/v1/admin/areas/{id}:
+    put:
+      tags:
+      - knowledge-admin-controller
+      operationId: updateArea
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: X-CSRF-TOKEN
+        in: header
+        required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AreaUpdate"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/AreaDto"
+      security:
+      - cookieAuth: []
+  /api/v1/staff/ideas/{id}/replies:
+    post:
+      tags:
+      - idea-communication-controller
+      operationId: reply
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: X-CSRF-TOKEN
+        in: header
+        required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReplyRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ReplyDto"
+      security:
+      - cookieAuth: []
   /api/v1/register:
     post:
       tags:
@@ -82,6 +246,10 @@ paths:
       tags:
       - api-controller
       operationId: createIdea
+      parameters:
+      - name: X-CSRF-TOKEN
+        in: header
+        required: true
       requestBody:
         content:
           application/json:
@@ -96,7 +264,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/IdeaDto"
       security:
-      - csrfToken: []
+      - cookieAuth: []
   /api/v1/ideas/assistant:
     post:
       tags:
@@ -117,7 +285,74 @@ paths:
                 $ref: "#/components/schemas/AssistantReply"
       security:
       - csrfToken: []
+  /api/v1/admin/resources:
+    get:
+      tags:
+      - knowledge-admin-controller
+      operationId: listResources
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ResourceDto"
+      security:
+      - cookieAuth: []
+    post:
+      tags:
+      - knowledge-admin-controller
+      operationId: createResource
+      parameters:
+      - name: X-CSRF-TOKEN
+        in: header
+        required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResourceUpdate"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ResourceDto"
+      security:
+      - cookieAuth: []
   /api/v1/admin/innovations:
+    get:
+      tags:
+      - knowledge-admin-controller
+      operationId: listInnovations
+      parameters:
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 0
+      - name: size
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 20
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PageDtoInnovationDto"
+      security:
+      - cookieAuth: []
     post:
       tags:
       - api-controller
@@ -139,6 +374,54 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/InnovationDto"
+      security:
+      - cookieAuth: []
+  /api/v1/admin/areas:
+    post:
+      tags:
+      - knowledge-admin-controller
+      operationId: createArea
+      parameters:
+      - name: X-CSRF-TOKEN
+        in: header
+        required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AreaUpdate"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/AreaDto"
+      security:
+      - cookieAuth: []
+  /api/v1/notifications/{id}/read:
+    patch:
+      tags:
+      - idea-communication-controller
+      operationId: markRead
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: X-CSRF-TOKEN
+        in: header
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/NotificationDto"
       security:
       - cookieAuth: []
   /api/v1/admin/reports/{id}/status:
@@ -201,11 +484,38 @@ paths:
                 $ref: "#/components/schemas/IdeaDto"
       security:
       - cookieAuth: []
+  /api/v1/staff/ideas:
+    get:
+      tags:
+      - idea-communication-controller
+      operationId: staffIdeas
+      parameters:
+      - name: status
+        in: query
+        required: false
+        schema:
+          type: string
+          default: PENDING
+          enum:
+          - PENDING
+          - APPROVED
+          - REJECTED
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/IdeaDto"
+      security:
+      - cookieAuth: []
   /api/v1/resources:
     get:
       tags:
       - api-controller
-      operationId: listResources
+      operationId: listResources_1
       responses:
         "200":
           description: OK
@@ -245,6 +555,22 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/RegionDto"
+  /api/v1/notifications:
+    get:
+      tags:
+      - idea-communication-controller
+      operationId: notifications
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/NotificationDto"
+      security:
+      - cookieAuth: []
   /api/v1/me:
     get:
       tags:
@@ -282,7 +608,7 @@ paths:
     get:
       tags:
       - api-controller
-      operationId: listInnovations
+      operationId: listInnovations_1
       parameters:
       - name: areaId
         in: query
@@ -350,7 +676,7 @@ paths:
     get:
       tags:
       - api-controller
-      operationId: getInnovation
+      operationId: getInnovation_1
       parameters:
       - name: id
         in: path
@@ -384,6 +710,29 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/IdeaDto"
+  /api/v1/ideas/{id}/replies:
+    get:
+      tags:
+      - idea-communication-controller
+      operationId: replies
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ReplyDto"
+      security:
+      - cookieAuth: []
   /api/v1/csrf:
     get:
       tags:
@@ -410,6 +759,33 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/AreaDto"
+  /api/v1/admin/trends:
+    get:
+      tags:
+      - admin-trends-controller
+      operationId: get
+      parameters:
+      - name: from
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+      - name: to
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/TrendsDto"
+      security:
+      - cookieAuth: []
   /api/v1/admin/ideas:
     get:
       tags:
@@ -439,6 +815,218 @@ paths:
       - cookieAuth: []
 components:
   schemas:
+    ResourceUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          minLength: 0
+        url:
+          type: string
+          maxLength: 500
+          minLength: 0
+          pattern: https?://.*
+        kind:
+          type: string
+          enum:
+          - BIBLIOTEKA
+          - RAPORTY
+          - STATYSTYKI
+          - MAPA
+          - PUBLIKACJE
+          - CANVAS
+        published:
+          type: boolean
+      required:
+      - kind
+      - name
+      - published
+      - url
+    ResourceDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        url:
+          type: string
+        kind:
+          type: string
+          enum:
+          - BIBLIOTEKA
+          - RAPORTY
+          - STATYSTYKI
+          - MAPA
+          - PUBLIKACJE
+          - CANVAS
+        published:
+          type: boolean
+    InnovationUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 255
+          minLength: 0
+        summary:
+          type: string
+          maxLength: 1000
+          minLength: 0
+        description:
+          type: string
+        targetGroup:
+          type: string
+          maxLength: 255
+          minLength: 0
+        status:
+          type: string
+          enum:
+          - ROZWOJ
+          - TESTOWANA
+          - WDROZONA
+        region:
+          type: string
+          enum:
+          - DOLNOSLASKIE
+          - KUJAWSKO_POMORSKIE
+          - LUBELSKIE
+          - LUBUSKIE
+          - LODZKIE
+          - MALOPOLSKA
+          - MAZOWIECKIE
+          - OPOLSKIE
+          - PODKARPACKIE
+          - PODLASKIE
+          - POMORSKIE
+          - SLASKIE
+          - SWIETOKRZYSKIE
+          - WARMINSKO_MAZURSKIE
+          - WIELKOPOLSKIE
+          - ZACHODNIOPOMORSKIE
+          - POLSKA
+          - INNE
+        videoUrl:
+          type: string
+          maxLength: 500
+          minLength: 0
+          pattern: https?://.*
+        sourceUrl:
+          type: string
+          maxLength: 500
+          minLength: 0
+          pattern: https?://.*
+        areaId:
+          type: integer
+          format: int64
+        published:
+          type: boolean
+      required:
+      - published
+      - status
+      - title
+    AreaDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        description:
+          type: string
+    InnovationDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        title:
+          type: string
+        summary:
+          type: string
+        description:
+          type: string
+        targetGroup:
+          type: string
+        status:
+          type: string
+          enum:
+          - ROZWOJ
+          - TESTOWANA
+          - WDROZONA
+        region:
+          type: string
+          enum:
+          - DOLNOSLASKIE
+          - KUJAWSKO_POMORSKIE
+          - LUBELSKIE
+          - LUBUSKIE
+          - LODZKIE
+          - MALOPOLSKA
+          - MAZOWIECKIE
+          - OPOLSKIE
+          - PODKARPACKIE
+          - PODLASKIE
+          - POMORSKIE
+          - SLASKIE
+          - SWIETOKRZYSKIE
+          - WARMINSKO_MAZURSKIE
+          - WIELKOPOLSKIE
+          - ZACHODNIOPOMORSKIE
+          - POLSKA
+          - INNE
+        videoUrl:
+          type: string
+        sourceUrl:
+          type: string
+        area:
+          $ref: "#/components/schemas/AreaDto"
+        createdAt:
+          type: string
+          format: date-time
+        published:
+          type: boolean
+    AreaUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          minLength: 0
+        description:
+          type: string
+          maxLength: 1000
+          minLength: 0
+      required:
+      - name
+    ReplyRequest:
+      type: object
+      properties:
+        body:
+          type: string
+          maxLength: 4000
+          minLength: 0
+      required:
+      - body
+    ReplyDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        ideaId:
+          type: integer
+          format: int64
+        body:
+          type: string
+        author:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
     RegisterRequest:
       type: object
       properties:
@@ -505,66 +1093,6 @@ components:
           type: string
       required:
       - description
-    AreaDto:
-      type: object
-      properties:
-        id:
-          type: integer
-          format: int64
-        name:
-          type: string
-        description:
-          type: string
-    InnovationDto:
-      type: object
-      properties:
-        id:
-          type: integer
-          format: int64
-        title:
-          type: string
-        summary:
-          type: string
-        description:
-          type: string
-        targetGroup:
-          type: string
-        status:
-          type: string
-          enum:
-          - ROZWOJ
-          - TESTOWANA
-          - WDROZONA
-        region:
-          type: string
-          enum:
-          - DOLNOSLASKIE
-          - KUJAWSKO_POMORSKIE
-          - LUBELSKIE
-          - LUBUSKIE
-          - LODZKIE
-          - MALOPOLSKA
-          - MAZOWIECKIE
-          - OPOLSKIE
-          - PODKARPACKIE
-          - PODLASKIE
-          - POMORSKIE
-          - SLASKIE
-          - SWIETOKRZYSKIE
-          - WARMINSKO_MAZURSKIE
-          - WIELKOPOLSKIE
-          - ZACHODNIOPOMORSKIE
-          - POLSKA
-          - INNE
-        videoUrl:
-          type: string
-        sourceUrl:
-          type: string
-        area:
-          $ref: "#/components/schemas/AreaDto"
-        createdAt:
-          type: string
-          format: date-time
     MatchItemDto:
       type: object
       properties:
@@ -599,7 +1127,8 @@ components:
       properties:
         title:
           type: string
-          minLength: 1
+          maxLength: 255
+          minLength: 0
         essence:
           type: string
         targetGroup:
@@ -613,10 +1142,6 @@ components:
           - WDROZENIE
         description:
           type: string
-        author:
-          type: string
-          maxLength: 255
-          minLength: 0
       required:
       - title
     IdeaDto:
@@ -719,7 +1244,8 @@ components:
       properties:
         title:
           type: string
-          minLength: 1
+          maxLength: 255
+          minLength: 0
         summary:
           type: string
         description:
@@ -758,8 +1284,28 @@ components:
         areaId:
           type: integer
           format: int64
+        published:
+          type: boolean
       required:
       - title
+    NotificationDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        ideaId:
+          type: integer
+          format: int64
+        kind:
+          type: string
+        title:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        read:
+          type: boolean
     StatusRequest:
       type: object
       properties:
@@ -826,25 +1372,6 @@ components:
           - REJECTED
       required:
       - status
-    ResourceDto:
-      type: object
-      properties:
-        id:
-          type: integer
-          format: int64
-        name:
-          type: string
-        url:
-          type: string
-        kind:
-          type: string
-          enum:
-          - BIBLIOTEKA
-          - RAPORTY
-          - STATYSTYKI
-          - MAPA
-          - PUBLIKACJE
-          - CANVAS
     RegionDto:
       type: object
       properties:
@@ -908,6 +1435,46 @@ components:
           type: string
         parameterName:
           type: string
+    CountDto:
+      type: object
+      properties:
+        key:
+          type: string
+        label:
+          type: string
+        count:
+          type: integer
+          format: int64
+    MonthCountDto:
+      type: object
+      properties:
+        month:
+          type: string
+        count:
+          type: integer
+          format: int64
+    TrendsDto:
+      type: object
+      properties:
+        total:
+          type: integer
+          format: int64
+        byArea:
+          type: array
+          items:
+            $ref: "#/components/schemas/CountDto"
+        byRegion:
+          type: array
+          items:
+            $ref: "#/components/schemas/CountDto"
+        byStatus:
+          type: array
+          items:
+            $ref: "#/components/schemas/CountDto"
+        byMonth:
+          type: array
+          items:
+            $ref: "#/components/schemas/MonthCountDto"
   securitySchemes:
     cookieAuth:
       type: apiKey

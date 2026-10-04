@@ -11,6 +11,7 @@ public class Innovation {
     private Long id;
     @Column(nullable = false)
     private String title;
+    @Column(length = 1000)
     private String summary;
     @Column(columnDefinition = "text")
     private String description;
@@ -22,10 +23,12 @@ public class Innovation {
     private Region region;
     @Column(name = "created_at", nullable = false)
     private Instant createdAt = Instant.now();
-    @Column(name = "video_url")
+    @Column(name = "video_url", length = 500)
     private String videoUrl;
-    @Column(name = "source_url")
+    @Column(name = "source_url", length = 500)
     private String sourceUrl;      // real, clickable link to the innovation (ROPS library / official site)
+    @Column(nullable = false)
+    private boolean published = true;
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "area_id")
     private ChallengeArea area;
@@ -89,6 +92,16 @@ public class Innovation {
     public void setSourceUrl(String sourceUrl) {
         this.sourceUrl = sourceUrl;
     }
+
+    public boolean isPublished() { return published; }
+    public void setPublished(boolean published) { this.published = published; }
+    public void setTitle(String title) { this.title = title; }
+    public void setSummary(String summary) { this.summary = summary; }
+    public void setDescription(String description) { this.description = description; }
+    public void setTargetGroup(String targetGroup) { this.targetGroup = targetGroup; }
+    public void setStatus(InnovationStatus status) { this.status = status; }
+    public void setRegion(Region region) { this.region = region; }
+    public void setVideoUrl(String videoUrl) { this.videoUrl = videoUrl; }
 
     public ChallengeArea getArea() {
         return area;

@@ -21,10 +21,10 @@ Swagger UI: `/swagger-ui.html`; aktualny JSON: `/v3/api-docs`. Pliki
 
 ## Konta, sesja i CSRF
 
-Mieszkaniec może bez konta zgłosić problem, uruchomić dopasowanie, rozmawiać
-z asystentem i przesłać pomysł. Pomysły mieszkańców trafiają do moderacji.
-Opcjonalne konto daje dostęp do `GET /api/v1/ideas?mine=true`, gdzie widać także
-własne pomysły oczekujące na moderację. Rejestracja to e-mail i hasło (minimum
+Mieszkaniec może bez konta zgłosić problem, uruchomić dopasowanie i rozmawiać
+z asystentem. Zgłoszenie nowego pomysłu wymaga konta i logowania. Pomysły
+trafiają do moderacji; `GET /api/v1/ideas?mine=true` pokazuje również własne
+pomysły oczekujące na decyzję. Rejestracja to e-mail i hasło (minimum
 12 znaków), obecnie bez potwierdzania adresu e-mail.
 
 Pracownicy i administratorzy logują się. Konta początkowe są tworzone z par
@@ -36,10 +36,10 @@ Zmienne są przekazywane także przez `docker-compose.yml`.
 Klient przeglądarkowy:
 
 1. Pobiera `GET /api/v1/csrf` i zachowuje sesję oraz zwrócony token.
-2. Przy każdym `POST` i `PATCH` wysyła token w nagłówku `X-CSRF-TOKEN`
+2. Przy każdym `POST`, `PUT` i `PATCH` wysyła token w nagłówku `X-CSRF-TOKEN`
    (dla formularza logowania może użyć pola `_csrf`). W `fetch` ustawia
    `credentials: 'include'`.
-3. Rejestruje konto przez `POST /api/v1/register`, jeśli użytkownik chce
+3. Rejestruje konto przez `POST /api/v1/register`, aby zgłosić pomysł i
    korzystać z „Moich pomysłów”. Loguje się przez `POST /login` z formularzem
    `username` (adres e-mail) i `password`; po zalogowaniu ponownie pobiera
    token CSRF. `GET /api/v1/me` zwraca e-mail i role; bez sesji zwraca 401.
@@ -61,14 +61,21 @@ gdy są dostępne dla gościa.
 | GET | `/api/v1/ideas` | Publiczna lista zatwierdzonych pomysłów |
 | GET | `/api/v1/ideas?mine=true` | Własne pomysły zalogowanego użytkownika, także oczekujące |
 | GET | `/api/v1/ideas/{id}` | Szczegóły pomysłu; oczekujące widzi właściciel i personel |
-| POST | `/api/v1/ideas` | Publiczne zgłoszenie pomysłu; wynik ma autora i status `PENDING` |
+| POST | `/api/v1/ideas` | Zgłoszenie pomysłu przez zalogowanego użytkownika; status `PENDING` |
 | POST | `/api/v1/ideas/assistant` | Publiczna porada; żądanie przyjmuje `message`, `history` i `ideaContext` |
-| POST | `/api/v1/register` | Opcjonalne konto mieszkańca |
+| POST | `/api/v1/register` | Konto mieszkańca potrzebne do zgłoszenia pomysłu |
 | GET | `/api/v1/me`, `/api/v1/csrf` | Stan sesji i token CSRF |
 | GET | `/api/v1/reports` | Lista zgłoszeń dla pracownika i administratora |
 | GET | `/api/v1/admin/ideas?status=PENDING` | Kolejka moderacji |
 | PATCH | `/api/v1/admin/ideas/{id}/moderation` | Zmiana statusu moderacji |
-| POST | `/api/v1/admin/innovations` | Dodanie innowacji |
+| POST | `/api/v1/admin/innovations` | Dodanie szkicu innowacji; `published: true` publikuje od razu |
+| GET | `/api/v1/admin/trends?from=2026-01-01&to=2026-12-31` | Agregaty potrzeb według obszaru, regionu, statusu i miesiąca |
+| GET/PUT | `/api/v1/admin/innovations/{id}` | Odczyt i edycja także nieopublikowanej innowacji |
+| GET/POST/PUT | `/api/v1/admin/resources` i `/api/v1/admin/resources/{id}` | Zarządzanie zasobami i publikacją |
+| POST/PUT | `/api/v1/admin/areas` i `/api/v1/admin/areas/{id}` | Aktualizacja obszarów wyzwań |
+| GET/POST | `/api/v1/staff/ideas` i `/api/v1/staff/ideas/{id}/replies` | Kolejka pomysłów i odpowiedź pracownika |
+| GET | `/api/v1/ideas/{id}/replies` | Odpowiedzi widoczne właścicielowi i personelowi |
+| GET/PATCH | `/api/v1/notifications` i `/api/v1/notifications/{id}/read` | Powiadomienia konta |
 | PATCH | `/api/v1/admin/reports/{id}/status` | Zmiana statusu zgłoszenia |
 
 Wartości `stage`, `status`, `reportStatus`, `kind`, `region` i statusu
@@ -85,4 +92,5 @@ uzasadnia dopasowania. Przy niedostępności modelu działa ścieżka zapasowa.
 
 Migracje `V4`–`V6` zawierają obszary, innowacje i zasoby ROPS. Migracja `V9`
 dodaje konta, status moderacji, słowniki, czas utworzenia innowacji i zapisane
-wyniki dopasowań.
+wyniki dopasowań. Migracje `V10` i `V11` dodają publikację wiedzy oraz
+trwałe odpowiedzi i powiadomienia dla kont.

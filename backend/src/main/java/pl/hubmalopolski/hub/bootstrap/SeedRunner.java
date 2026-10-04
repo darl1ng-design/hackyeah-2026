@@ -36,6 +36,7 @@ public class SeedRunner implements ApplicationRunner {
         if (!seedVectors) return;
         int done = 0, failed = 0;
         for (Innovation in : innovations.findAll()) {
+            if (!in.isPublished()) continue;
             if (in.getVectorId() != null) continue;
             try {
                 matchmaking.index(in);

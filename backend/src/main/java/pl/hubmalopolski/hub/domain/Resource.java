@@ -13,12 +13,21 @@ public class Resource {
     private Long id;
     @Column(nullable = false)
     private String name;
-    @Column(nullable = false)
+    @Column(nullable = false, length = 500)
     private String url;
     @Enumerated(EnumType.STRING)
     private ResourceKind kind;
+    @Column(nullable = false)
+    private boolean published = true;
 
     protected Resource() {
+    }
+
+    public Resource(String name, String url, ResourceKind kind, boolean published) {
+        this.name = name;
+        this.url = url;
+        this.kind = kind;
+        this.published = published;
     }
 
     public Long getId() {
@@ -36,4 +45,10 @@ public class Resource {
     public ResourceKind getKind() {
         return kind;
     }
+
+    public boolean isPublished() { return published; }
+    public void setName(String name) { this.name = name; }
+    public void setUrl(String url) { this.url = url; }
+    public void setKind(ResourceKind kind) { this.kind = kind; }
+    public void setPublished(boolean published) { this.published = published; }
 }

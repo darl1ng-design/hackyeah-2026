@@ -15,6 +15,7 @@ public final class InnovationFilters {
     public static Specification<Innovation> matching(Long areaId, String q, Region region) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
+            predicates.add(cb.isTrue(root.get("published")));
             if (areaId != null) predicates.add(cb.equal(root.get("area").get("id"), areaId));
             if (region != null) predicates.add(cb.equal(root.get("region"), region));
             if (q != null && !q.isBlank()) {

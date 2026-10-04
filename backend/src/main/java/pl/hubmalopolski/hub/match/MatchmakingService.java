@@ -49,6 +49,7 @@ public class MatchmakingService {
      * Indeksuje innowacje w vector_store (wyzwalane przy seedzie i przy tworzeniu przez admina).
      */
     public void index(Innovation in) {
+        String oldVectorId = in.getVectorId();
         String text = String.join("\n",
                 "Tytul: " + in.getTitle(),
                 "Opis: " + nullSafe(in.getSummary()) + " " + nullSafe(in.getDescription()),
@@ -62,6 +63,16 @@ public class MatchmakingService {
                 .build();
         vectorStore.add(List.of(doc));
         in.setVectorId(doc.getId());
+        if (oldVectorId != null && !oldVectorId.equals(doc.getId())) {
+            try { vectorStore.delete(List.of(oldVectorId)); }
+            catch (Exception e) { log.warn("Nie można usunąć poprzedniego wektora {}", oldVectorId, e); }
+        }
+    }
+
+    public void removeIndex(Innovation in) {
+        if (in.getVectorId() == null) return;
+        vectorStore.delete(List.of(in.getVectorId()));
+        in.setVectorId(null);
     }
 
     public List<MatchResult> match(String problemText) {
@@ -109,6 +120,7 @@ public class MatchmakingService {
         List<Innovation> candidates = fusedIds.stream()
                 .map(innovations::findById)
                 .filter(Optional::isPresent).map(Optional::get)
+                .filter(Innovation::isPublished)
                 .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
         return finish(problemText, candidates, byVector, byBm25);
     }

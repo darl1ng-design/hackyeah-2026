@@ -15,6 +15,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import pl.hubmalopolski.hub.ai.IdeaAssistant;
 import pl.hubmalopolski.hub.ai.ProblemClassifier;
 import pl.hubmalopolski.hub.config.SecurityConfig;
+import pl.hubmalopolski.hub.communication.IdeaCommunicationService;
 import pl.hubmalopolski.hub.domain.Innovation;
 import pl.hubmalopolski.hub.domain.InnovationStatus;
 import pl.hubmalopolski.hub.domain.Region;
@@ -34,6 +35,7 @@ import java.util.Optional;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -53,6 +55,7 @@ class CatalogApiTests {
     @MockitoBean ProblemClassifier classifier;
     @MockitoBean IdeaAssistant assistant;
     @MockitoBean AppUserRepository users;
+    @MockitoBean IdeaCommunicationService communication;
 
     @Test
     void innovationsHavePageMetadata() throws Exception {
@@ -108,7 +111,7 @@ class CatalogApiTests {
     @Test
     void invalidIdeaStageIsRejected() throws Exception {
         when(ideas.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
-        mvc.perform(post("/api/v1/ideas").with(csrf())
+        mvc.perform(post("/api/v1/ideas").with(user("member").roles("MEMBER")).with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"title\":\"Pomysł\",\"stage\":\"NIEZNANY\"}"))
                 .andExpect(status().isBadRequest());

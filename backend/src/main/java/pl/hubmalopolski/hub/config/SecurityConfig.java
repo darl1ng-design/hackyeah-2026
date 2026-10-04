@@ -30,9 +30,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/csrf", "/api/v1/innovations/**",
                                 "/api/v1/areas", "/api/v1/resources", "/api/v1/regions",
                                 "/api/v1/matches/*", "/api/v1/ideas", "/api/v1/ideas/*").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/ideas", "/api/v1/matches",
+                        .requestMatchers(HttpMethod.POST, "/api/v1/matches",
                                 "/api/v1/ideas/assistant", "/api/v1/register").permitAll()
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/v1/staff/**").hasAnyRole("STAFF", "ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/v1/reports").hasAnyRole("STAFF", "ADMIN")
                         .requestMatchers("/api/v1/**").authenticated()
                         .anyRequest().permitAll())
