@@ -20,6 +20,9 @@ const FALLBACK: Record<number, string> = {
   401: "Zaloguj się, żeby kontynuować.",
   403: "Nie masz dostępu do tej części.",
   404: "Nie znaleziono.",
+  413: "Plik jest za duży.",
+  429: "Za dużo prób. Spróbuj za minutę.",
+  503: "Usługa jest chwilowo niedostępna. Spróbuj ponownie za chwilę.",
 };
 
 let csrf: { token: string; headerName: string } | null = null;
@@ -50,7 +53,8 @@ async function request<R>(
     : "";
   const headers: Record<string, string> = { Accept: "application/json" };
   if (method !== "GET") Object.assign(headers, await csrfHeader());
-  if (body !== undefined) headers["Content-Type"] = "application/json";
+  const multipart = body instanceof FormData; // browser sets the multipart boundary itself
+  if (body !== undefined && !multipart) headers["Content-Type"] = "application/json";
 
   let res: Response;
   try {
@@ -58,7 +62,7 @@ async function request<R>(
       method,
       headers,
       credentials: "include",
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body: body === undefined || multipart ? (body as FormData | undefined) : JSON.stringify(body),
     });
   } catch {
     throw new ApiError(
@@ -127,6 +131,13 @@ export const api = {
   idea: (id: number) => get<T.Idea>(`/api/v1/ideas/${id}`),
   replies: (id: number) => get<T.Reply[]>(`/api/v1/ideas/${id}/replies`),
   createIdea: (b: T.IdeaRequest) => request<T.Idea>("POST", "/api/v1/ideas", b),
+  transcriptionHealth: () => get<{ available: boolean }>("/api/v1/transcribe/health"),
+  transcribe: (audio: Blob, language = "pl") => {
+    const f = new FormData();
+    f.append("file", audio, "nagranie");
+    f.append("language", language);
+    return request<{ text: string }>("POST", "/api/v1/transcribe", f);
+  },
   assistant: (b: T.AssistantRequest) =>
     request<{ reply: string }>("POST", "/api/v1/ideas/assistant", b),
   resources: () => get<T.Resource[]>("/api/v1/resources"),
