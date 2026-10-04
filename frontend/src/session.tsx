@@ -30,6 +30,8 @@ type Session = {
   closeToast: () => void;
   reloadAreas: () => void;
   logout: () => Promise<void>;
+  /** Speech-to-text backend reachable — dictation controls are hidden otherwise. */
+  whisperOk: boolean;
 };
 
 const Ctx = createContext<Session | null>(null);
@@ -40,6 +42,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [areas, setAreas] = useState<Area[]>([]);
   const [regions, setRegions] = useState<Region[]>([]);
   const [notifs, setNotifs] = useState<Notification[]>([]);
+  const [whisperOk, setWhisperOk] = useState(false);
   const [toast, setToast] = useState<Session["toast"]>(null);
   const timer = useRef<number>(undefined);
 
@@ -69,6 +72,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       setReady(true);
     });
     return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    api.transcriptionHealth().then((r) => setWhisperOk(r.available), () => setWhisperOk(false));
   }, []);
 
   useEffect(() => {
@@ -104,6 +111,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     closeToast: () => setToast(null),
     reloadAreas,
     logout,
+    whisperOk,
   };
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

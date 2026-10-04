@@ -131,6 +131,8 @@ export const api = {
   idea: (id: number) => get<T.Idea>(`/api/v1/ideas/${id}`),
   replies: (id: number) => get<T.Reply[]>(`/api/v1/ideas/${id}/replies`),
   createIdea: (b: T.IdeaRequest) => request<T.Idea>("POST", "/api/v1/ideas", b),
+  parseIdea: (text: string) =>
+    request<Required<T.IdeaRequest>>("POST", "/api/v1/ideas/assistant/parse", { text }),
   transcriptionHealth: () => get<{ available: boolean }>("/api/v1/transcribe/health"),
   transcribe: (audio: Blob, language = "pl") => {
     const f = new FormData();
