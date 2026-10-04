@@ -28,7 +28,8 @@ public class IdeaStoryParser {
     }
 
     public ParsedIdea parse(String story) {
-        ParsedIdea p = chatClient.prompt().system(SYSTEM).user(story).call().entity(ParsedIdea.class);
+        ParsedIdea p = chatClient.prompt().system(SYSTEM).user(story).call()
+                .entity(ParsedIdea.class, options -> options.useProviderStructuredOutput().validateSchema());
         if (p == null) throw new IllegalStateException("empty parse result");
         return new ParsedIdea(cut(p.title(), 255), cut(p.essence(), 4000), cut(p.targetGroup(), 255),
                 p.stage() == null ? IdeaStage.MYSL : p.stage(),

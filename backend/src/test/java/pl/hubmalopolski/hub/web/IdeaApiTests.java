@@ -128,7 +128,10 @@ class IdeaApiTests {
                         .content("{\"text\":\"Mam pomysł na bus na telefon dla seniorów.\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.title").value("Bus na telefon"))
-                .andExpect(jsonPath("$.stage").value("MYSL"));
+                .andExpect(jsonPath("$.essence").value("Seniorzy nie dojeżdżają do lekarza."))
+                .andExpect(jsonPath("$.targetGroup").value("seniorzy"))
+                .andExpect(jsonPath("$.stage").value("MYSL"))
+                .andExpect(jsonPath("$.description").value("Pełny opis."));
         mvc.perform(post("/api/v1/ideas/assistant/parse").with(csrf())
                         .contentType(org.springframework.http.MediaType.APPLICATION_JSON).content("{\"text\":\"\"}"))
                 .andExpect(status().isBadRequest());
