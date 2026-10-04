@@ -4,6 +4,8 @@ import { api } from "../../api/client";
 import type { ChatMessage, IdeaRequest } from "../../api/types";
 import { Button, Icon, Tag, TextField } from "../../components/ds";
 import { useSession } from "../../session";
+import { DictationButton } from "../dictation/DictationButton";
+import { appendText } from "../dictation/useDictation";
 import s from "./NewIdeaPage.module.css";
 
 const STARTERS = [
@@ -116,6 +118,7 @@ export function AssistantChat({ ideaContext, onInsert }: Props) {
           onChange={(e) => setInput(e.target.value)}
           style={{ flex: 1, minWidth: 0 }}
         />
+        <DictationButton label="Podyktuj pytanie" onText={(t) => setInput((i) => appendText(i, t))} />
         <Button
           variant="secondary"
           iconLeft="send"

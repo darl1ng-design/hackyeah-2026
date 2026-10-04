@@ -18,6 +18,7 @@ import { go, loginHref } from "../../lib/router";
 import type { ScreenProps } from "../../screens";
 import { useSession } from "../../session";
 import { loadMatchDesc } from "../match/matchDesc";
+import { WithDictation } from "../dictation/WithDictation";
 import { AssistantChat } from "./AssistantChat";
 import s from "./NewIdeaPage.module.css";
 
@@ -47,6 +48,7 @@ export function NewIdeaPage({ route }: ScreenProps) {
 
   const set = (k: keyof Form) => (e: { target: { value: string } }) =>
     setF((p) => ({ ...p, [k]: e.target.value }));
+  const setText = (k: keyof Form) => (v: string) => setF((p) => ({ ...p, [k]: v }));
   const errSummary = Object.values(errs).filter(Boolean).join(" ");
 
   async function submit(e: React.FormEvent) {
@@ -121,17 +123,19 @@ export function NewIdeaPage({ route }: ScreenProps) {
             onChange={set("title")}
             error={errs.title}
           />
-          <Textarea
-            id="i-essence"
-            label="Istota pomysłu"
-            optional
-            hint="Jedno–dwa zdania: problem → rozwiązanie → zmiana."
-            rows={3}
-            maxLength={4000}
-            value={f.essence}
-            onChange={set("essence")}
-            error={errs.essence}
-          />
+          <WithDictation value={f.essence} onChange={setText("essence")} label="Podyktuj istotę pomysłu">
+              <Textarea
+              id="i-essence"
+              label="Istota pomysłu"
+              optional
+              hint="Jedno–dwa zdania: problem → rozwiązanie → zmiana."
+              rows={3}
+              maxLength={4000}
+              value={f.essence}
+              onChange={set("essence")}
+              error={errs.essence}
+            />
+          </WithDictation>
           <TextField
             id="i-target"
             label="Grupa docelowa"
@@ -148,17 +152,19 @@ export function NewIdeaPage({ route }: ScreenProps) {
             value={f.stage}
             onChange={(v) => setF((p) => ({ ...p, stage: v as Stage }))}
           />
-          <Textarea
-            id="i-desc"
-            label="Opis"
-            optional
-            hint="Co konkretnie zrobisz, z kim i po czym poznasz, że działa."
-            rows={7}
-            maxLength={4000}
-            value={f.description}
-            onChange={set("description")}
-            error={errs.description}
-          />
+          <WithDictation value={f.description} onChange={setText("description")} label="Podyktuj opis">
+              <Textarea
+              id="i-desc"
+              label="Opis"
+              optional
+              hint="Co konkretnie zrobisz, z kim i po czym poznasz, że działa."
+              rows={7}
+              maxLength={4000}
+              value={f.description}
+              onChange={set("description")}
+              error={errs.description}
+            />
+          </WithDictation>
           <div className="row">
             <Button type="submit" size="lg" iconRight="send" disabled={sending}>
               {sending ? "Wysyłamy…" : "Wyślij pomysł"}
