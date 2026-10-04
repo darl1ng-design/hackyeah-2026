@@ -3,7 +3,7 @@ import type { ResourceKind } from "../../api/types";
 import { useApi } from "../../api/useApi";
 import { Icon } from "../../components/ds";
 import { PageState } from "../../components/PageState";
-import { host } from "../../lib/format";
+import { host, safeUrl } from "../../lib/format";
 import { LABELS } from "../../lib/labels";
 import s from "./ResourcesPage.module.css";
 
@@ -19,7 +19,7 @@ const KIND_ICON: Record<ResourceKind, string> = {
 export function ResourcesPage() {
   const { data, error, loading } = useApi(() => api.resources(), []);
   const groups = (Object.keys(LABELS.resourceKind) as ResourceKind[])
-    .map((k) => ({ kind: k, items: (data ?? []).filter((x) => x.kind === k) }))
+    .map((k) => ({ kind: k, items: (data ?? []).filter((x) => x.kind === k && safeUrl(x.url)) }))
     .filter((g) => g.items.length);
 
   return (
@@ -53,7 +53,7 @@ export function ResourcesPage() {
                 {g.items.map((x) => (
                   <li key={x.id} className={s.item}>
                     <a
-                      href={x.url}
+                      href={safeUrl(x.url)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className={s.link}

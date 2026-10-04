@@ -2,7 +2,7 @@ import { api } from "../../api/client";
 import { useApi } from "../../api/useApi";
 import { Badge, Breadcrumbs, Button, Icon, Tag } from "../../components/ds";
 import { PageState } from "../../components/PageState";
-import { formatDate } from "../../lib/format";
+import { formatDate, safeUrl } from "../../lib/format";
 import { INN_STATUS_TONE, LABELS } from "../../lib/labels";
 import { go } from "../../lib/router";
 import type { ScreenProps } from "../../screens";
@@ -78,18 +78,18 @@ export function InnovationPage({ route }: ScreenProps) {
           <h1 className="h1">{i.title}</h1>
           <p className="lead">{i.summary}</p>
           <div className={`prose ${s.body}`}>{i.description}</div>
-          {i.videoUrl && (
+          {safeUrl(i.videoUrl) && (
             <div className={s.video}>
               <Icon name="circle-play" size={48} />
               <strong>Wideo o innowacji</strong>
-              <a href={i.videoUrl} target="_blank" rel="noopener noreferrer">
+              <a href={safeUrl(i.videoUrl)} target="_blank" rel="noopener noreferrer">
                 Otwórz wideo w nowej karcie
               </a>
             </div>
           )}
-          {i.sourceUrl && (
+          {safeUrl(i.sourceUrl) && (
             <a
-              href={i.sourceUrl}
+              href={safeUrl(i.sourceUrl)}
               target="_blank"
               rel="noopener noreferrer"
               className="icon-link"
