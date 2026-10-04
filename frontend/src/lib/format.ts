@@ -63,3 +63,13 @@ export const host = (url: string) => {
     return url;
   }
 };
+
+/** Only http(s) URLs may reach an href (blocks `javascript:` etc. from stored data). */
+export const safeUrl = (url: string | null | undefined) => {
+  try {
+    const p = new URL(url ?? '').protocol;
+    return p === 'http:' || p === 'https:' ? url! : undefined;
+  } catch {
+    return undefined;
+  }
+};
