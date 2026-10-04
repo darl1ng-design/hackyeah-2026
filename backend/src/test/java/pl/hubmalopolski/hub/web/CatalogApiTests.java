@@ -54,6 +54,7 @@ class CatalogApiTests {
     @MockitoBean MatchReportService matchReports;
     @MockitoBean ProblemClassifier classifier;
     @MockitoBean IdeaAssistant assistant;
+    @MockitoBean pl.hubmalopolski.hub.ai.IdeaStoryParser storyParser;
     @MockitoBean AppUserRepository users;
     @MockitoBean IdeaCommunicationService communication;
 

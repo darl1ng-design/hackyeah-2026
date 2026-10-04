@@ -59,6 +59,7 @@ class ApiHappyPathTests {
     @MockitoBean ChatModel chatModel;
     @MockitoBean ProblemClassifier classifier;
     @MockitoBean IdeaAssistant assistant;
+    @MockitoBean pl.hubmalopolski.hub.ai.IdeaStoryParser storyParser;
 
     @Test
     void guestCanReopenMatchWhileStaffAndAdminProcessReport() throws Exception {
