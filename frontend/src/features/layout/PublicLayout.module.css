@@ -1,0 +1,208 @@
+.page {
+  font-family: var(--font-body);
+  color: var(--black);
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--white);
+  /* sticky footer: main grows, footer pinned to bottom on short pages */
+  display: flex;
+  flex-direction: column;
+}
+.skip {
+  position: absolute;
+  left: -9999px;
+  top: 8px;
+  z-index: 1000;
+  background: var(--yellow-500);
+  color: var(--black);
+  border: 0;
+  padding: 8px 12px;
+  font: inherit;
+  font-weight: var(--fw-bold);
+}
+.skip:focus {
+  left: 16px;
+}
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-header);
+  background: var(--white);
+  border-bottom: 1px solid var(--gray-200);
+}
+.topbar {
+  background: var(--black);
+  color: var(--white);
+}
+.topbarInner {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: 0 var(--gutter);
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 20px;
+  font-size: var(--fs-sm);
+  box-sizing: border-box;
+}
+.email {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  color: var(--gray-300);
+}
+.topLink,
+.topLink:hover {
+  color: var(--white);
+}
+
+.bar {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: 0 var(--gutter);
+  height: var(--header-h);
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  box-sizing: border-box;
+}
+.logo {
+  text-decoration: none;
+  flex: none;
+}
+.nav {
+  display: flex;
+  gap: 4px;
+  min-width: 0;
+}
+.nav a {
+  height: var(--header-h);
+  display: flex;
+  align-items: center;
+  padding: 4px 12px 0;
+  color: var(--black);
+  text-decoration: none;
+  white-space: nowrap;
+  box-sizing: border-box;
+  border-bottom: 4px solid transparent;
+}
+.nav a[aria-current="page"] {
+  font-weight: var(--fw-bold);
+  border-bottom-color: var(--red-600);
+}
+.spacer {
+  flex: 1;
+}
+.bell {
+  position: relative;
+  display: inline-flex;
+}
+.badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  box-sizing: border-box;
+  border-radius: var(--radius-pill);
+  background: var(--red-600);
+  color: var(--white);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.narrowOnly {
+  display: none;
+}
+
+.menu {
+  border-top: 1px solid var(--gray-200);
+  padding: 8px 0 16px;
+  background: var(--white);
+  display: flex;
+  flex-direction: column;
+}
+.menu a {
+  display: flex;
+  align-items: center;
+  height: 48px;
+  padding: 0 20px;
+  color: var(--black);
+  text-decoration: none;
+  border-left: 4px solid transparent;
+}
+.menu a[aria-current="page"] {
+  font-weight: var(--fw-bold);
+  border-left-color: var(--red-600);
+}
+.menuCta {
+  padding: 12px 20px 0;
+}
+
+@media (max-width: 959px) {
+  .nav,
+  .wideOnly {
+    display: none;
+  }
+  .narrowOnly {
+    display: inline-flex;
+  }
+}
+
+.main {
+  outline: none;
+  flex: 1 0 auto;
+}
+
+.footer {
+  background: var(--black);
+  color: var(--white);
+  margin-top: var(--space-20);
+}
+.footer a,
+.footer a:hover {
+  color: var(--white);
+}
+.footerInner {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: var(--space-12) var(--gutter) var(--space-8);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-8);
+  box-sizing: border-box;
+}
+.footerNote {
+  color: var(--gray-300);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  max-width: 320px;
+}
+.footerCol {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.footerHead {
+  font-weight: var(--fw-bold);
+  font-size: var(--fs-sm);
+  letter-spacing: var(--ls-overline);
+  text-transform: uppercase;
+  color: var(--yellow-500);
+}
+.copy {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: var(--space-4) var(--gutter) var(--space-6);
+  border-top: 1px solid var(--gray-800);
+  font-size: var(--fs-sm);
+  color: var(--gray-400);
+  box-sizing: border-box;
+}
